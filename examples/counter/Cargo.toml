@@ -1,0 +1,11 @@
+[package]
+name = "counter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+backend_native = { workspace = true }
+mf_core = { workspace = true }
+mf_macros = { workspace = true }
+mf_runtime = { workspace = true }
+mf_widgets = { workspace = true }

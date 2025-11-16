@@ -1,0 +1,7 @@
+[package]
+name = "mf_widgets"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mf_core = { workspace = true }

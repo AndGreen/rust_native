@@ -1,0 +1,8 @@
+[package]
+name = "backend_wgpu"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+backend_api = { workspace = true }
+mf_core = { workspace = true }

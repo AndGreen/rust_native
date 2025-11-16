@@ -1,0 +1,26 @@
+[workspace]
+members = [
+    "crates/core",
+    "crates/macros",
+    "crates/backend_api",
+    "crates/backend_native",
+    "crates/backend_wgpu",
+    "crates/widgets",
+    "crates/runtime",
+    "examples/counter",
+    "examples/album_list",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+
+[workspace.dependencies]
+mf_core = { path = "crates/core" }
+mf_macros = { path = "crates/macros" }
+backend_api = { path = "crates/backend_api" }
+backend_native = { path = "crates/backend_native" }
+backend_wgpu = { path = "crates/backend_wgpu" }
+mf_widgets = { path = "crates/widgets" }
+mf_runtime = { path = "crates/runtime" }
