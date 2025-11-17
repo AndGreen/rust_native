@@ -32,6 +32,14 @@ mf/
    cargo run -p album_list
    ```
 
+## Solid-like Reactive Helpers
+
+- `create_signal` / `Setter` mirror Solid's `createSignal`.
+- `batch_updates(|| { ... })` coalesces multiple setter calls before notifying subscribers.
+- `Scope` + `on_cleanup` let you register cleanup callbacks (e.g., to stop timers).
+- `start_interval(Duration, f)` spawns a cancelable interval; pair it with `on_cleanup`.
+- The `counter` example demonstrates the pattern: interval-driven increments, batched button updates, and cleanup.
+
 ## Key Concepts
 
 - **`mf_core`**: Provides the `View` type, widget traits, signal primitives (`signal`, `Signal`, `Setter`), a tiny diffing engine, and a `taffy`-based layout shim.

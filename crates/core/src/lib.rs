@@ -7,5 +7,7 @@ pub mod view;
 pub use diff::{DiffEngine, Patch};
 pub use dsl::{IntoView, WithChildren};
 pub use layout::{ComputedLayout, LayoutNode, LayoutSpec};
-pub use signal::{signal, Setter, Signal, SignalSubscription};
+pub use signal::{
+    batch, collect_reads, signal, ErasedSignalHandle, Setter, Signal, SignalSubscription,
+};
 pub use view::{Fragment, View, WidgetElement};
