@@ -46,7 +46,7 @@ mf/
 - **`mf_macros::ui!`**: Compiles SwiftUI-like syntax into pure Rust by chaining `IntoView`/`WithChildren` implementations. Supports positional and named args plus modifier chains.
 - **`mf_widgets`**: Supplies basic widgets (`Text`, `Button`, `Image`, `VStack`, `HStack`, `List`) with builder-style modifiers for fonts, colors, spacing, etc.
 - **`mf_runtime`**: Hosts the `App` type that owns a backend and rebuilds the tree whenever watched signals emit updates.
-- **Backends**: `backend_native` and `backend_wgpu` currently log the diffed tree; they are designed to be swapped for actual UIKit/Android or wgpu/vello integrations later.
+- **Backends**: `backend_native` renders to UIKit when built for iOS (bootstraps a `UIWindow`/`UIViewController` and maps `Text`, `Button`, `Image`, `HStack`/`VStack`, `List` into native views). On non-iOS targets it stays a logging stub. To try it on device/simulator, integrate the Rust staticlib in a tiny Swift entrypoint, create `App::new(NativeBackend::default(), builder)` on the main thread, and call `repaint()`/`run()`; the backend attaches its own window. `backend_wgpu` remains a logging stub for now.
 
 ## Roadmap Snapshot
 

@@ -28,6 +28,10 @@ impl WidgetElement for ListElement {
     fn describe(&self) -> String {
         format!("List(len: {})", self.len)
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 impl IntoView for ListView {

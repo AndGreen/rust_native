@@ -1,14 +1,7 @@
-mod fallback;
+use backend_api::{debug_tree, Backend};
+use mf_core::View;
 
-#[cfg(target_os = "ios")]
-mod ios;
-
-#[cfg(target_os = "ios")]
-pub use ios::NativeBackend;
-
-#[cfg(not(target_os = "ios"))]
-pub use fallback::NativeBackend;
-
+/// Logging-only backend used on non-iOS targets.
 #[derive(Default)]
 pub struct NativeBackend;
 

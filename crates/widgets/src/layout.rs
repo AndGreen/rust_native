@@ -94,17 +94,35 @@ impl WithChildren for HStack {
     }
 }
 
-#[derive(Clone, Copy)]
-enum Axis {
+#[derive(Clone, Copy, Debug)]
+pub enum Axis {
     Horizontal,
     Vertical,
 }
 
-struct StackElement {
+pub struct StackElement {
     axis: Axis,
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+}
+
+impl StackElement {
+    pub fn axis(&self) -> Axis {
+        self.axis
+    }
+
+    pub fn spacing(&self) -> f32 {
+        self.spacing
+    }
+
+    pub fn padding(&self) -> f32 {
+        self.padding
+    }
+
+    pub fn alignment(&self) -> Alignment {
+        self.alignment
+    }
 }
 
 impl WidgetElement for StackElement {
@@ -123,5 +141,9 @@ impl WidgetElement for StackElement {
             self.padding,
             self.alignment
         )
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

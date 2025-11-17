@@ -29,6 +29,18 @@ impl ImageView {
         self.corner_radius = Some(radius);
         self
     }
+
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+
+    pub fn size(&self) -> (Option<f32>, Option<f32>) {
+        (self.width, self.height)
+    }
+
+    pub fn corner_radius_value(&self) -> Option<f32> {
+        self.corner_radius
+    }
 }
 
 impl WidgetElement for ImageView {
@@ -38,6 +50,10 @@ impl WidgetElement for ImageView {
 
     fn describe(&self) -> String {
         format!("Image({})", self.source)
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 

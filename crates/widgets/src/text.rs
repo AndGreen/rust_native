@@ -33,6 +33,18 @@ impl TextView {
     pub fn foreground(self, color: Color) -> Self {
         self.color(color)
     }
+
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub fn font(&self) -> Option<&Font> {
+        self.font.as_ref()
+    }
+
+    pub fn color(&self) -> Option<&Color> {
+        self.color.as_ref()
+    }
 }
 
 impl WidgetElement for TextView {
@@ -49,6 +61,10 @@ impl WidgetElement for TextView {
             description.push_str(&format!("[color: {:.2},{:.2},{:.2}]", color.r, color.g, color.b));
         }
         description
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 

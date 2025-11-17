@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt;
 use std::sync::Arc;
 
@@ -8,6 +9,9 @@ pub trait WidgetElement: Send + Sync {
     fn describe(&self) -> String {
         self.name().to_string()
     }
+
+    /// Enables backend-specific downcasting to concrete widget types.
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Clone)]
@@ -49,6 +53,10 @@ pub struct Fragment;
 impl WidgetElement for Fragment {
     fn name(&self) -> &'static str {
         "Fragment"
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 

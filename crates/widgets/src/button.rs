@@ -32,6 +32,14 @@ impl ButtonView {
             action();
         }
     }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn action(&self) -> Option<&ButtonAction> {
+        self.on_click.as_ref()
+    }
 }
 
 impl WidgetElement for ButtonView {
@@ -41,6 +49,10 @@ impl WidgetElement for ButtonView {
 
     fn describe(&self) -> String {
         format!("Button(\"{}\")", self.label)
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
