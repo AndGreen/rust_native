@@ -6,9 +6,9 @@
     "auditLog": "/Users/andreyzelenin/projects/rust_native/logs/.034b357ab828d67d8864fc58027c8dfb71ee3826-audit.json",
     "files": [
         {
-            "date": 1763334323301,
-            "name": "/Users/andreyzelenin/projects/rust_native/logs/mcp-puppeteer-2025-11-17.log",
-            "hash": "0010ffbdd7c869f478d06abbae183ce78a462311d43aabc555cd5610c93b2be5"
+            "date": 1771366008984,
+            "name": "/Users/andreyzelenin/projects/rust_native/logs/mcp-puppeteer-2026-02-18.log",
+            "hash": "3a8f433bcc87a1731f1f5bc97080cf87e30a045b07098a677b094b4f4fb86b12"
         }
     ],
     "hashType": "sha256"

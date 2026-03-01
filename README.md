@@ -56,6 +56,17 @@ See `MF_framework_plan.md` for the full vision. Immediate priorities after this 
 2. Expand widgets (ScrollView, gestures, environment values) and runtime services (focus, async events).
 3. Harden the macro diagnostics and add tests around signals/diffing to keep ergonomics high as features grow.
 
+## VDOM-First Docs
+
+Current execution documentation for the VDOM-first path:
+
+1. `docs/remediation_plan.md` - 12-week implementation and stabilization plan.
+2. `docs/architecture_vdom.md` - target runtime and renderer architecture.
+3. `docs/mutation_protocol.md` - canonical mutation contract and invariants.
+4. `docs/layout_contract.md` - Rust-driven layout contract and frame rules.
+5. `docs/testing_strategy.md` - test layers, CI gates, and acceptance scenarios.
+6. `docs/roadmap_vdom_native.md` - post-remediation milestones.
+
 ## Contributing
 
 This repository is in rapid iteration mode. Feel free to experiment inside the examples or add new crates, but keep code formatted (`cargo fmt`) and linted (`cargo clippy`) before submitting patches. Open issues/PRs for discussion on architecture changes or new widget APIs. All contributions should maintain the “Rust-only, no JS bridge” principle laid out in the plan.
