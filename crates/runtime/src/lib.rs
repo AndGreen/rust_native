@@ -217,3 +217,106 @@ where
         join: Some(join),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use backend_api::Backend;
+    use mf_core::view::WidgetElement;
+    use mf_core::View;
+
+    #[derive(Default, Clone)]
+    struct Counts {
+        mounts: usize,
+        updates: usize,
+    }
+
+    #[derive(Clone)]
+    struct TestBackend {
+        counts: Arc<Mutex<Counts>>,
+    }
+
+    impl TestBackend {
+        fn new() -> (Self, Arc<Mutex<Counts>>) {
+            let counts = Arc::new(Mutex::new(Counts::default()));
+            (
+                Self {
+                    counts: counts.clone(),
+                },
+                counts,
+            )
+        }
+    }
+
+    impl Backend for TestBackend {
+        fn mount(&mut self, _view: &View) {
+            self.counts.lock().unwrap().mounts += 1;
+        }
+
+        fn update(&mut self, _view: &View) {
+            self.counts.lock().unwrap().updates += 1;
+        }
+    }
+
+    struct TestElement(&'static str);
+
+    impl WidgetElement for TestElement {
+        fn name(&self) -> &'static str {
+            self.0
+        }
+
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+    }
+
+    fn node(name: &'static str) -> View {
+        View::new(TestElement(name), Vec::new())
+    }
+
+    #[test]
+    fn first_repaint_mounts_without_update() {
+        let (backend, counts) = TestBackend::new();
+        let app = App::new(backend, || node("Root"));
+
+        app.repaint();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.mounts, 1);
+        assert_eq!(snapshot.updates, 0);
+    }
+
+    #[test]
+    fn repaint_without_tree_changes_does_not_call_update() {
+        let (backend, counts) = TestBackend::new();
+        let app = App::new(backend, || node("Root"));
+
+        app.repaint();
+        app.repaint();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.mounts, 1);
+        assert_eq!(snapshot.updates, 0);
+    }
+
+    #[test]
+    fn signal_change_that_alters_tree_shape_triggers_update() {
+        let (backend, counts) = TestBackend::new();
+        let (state, set_state) = create_signal(false);
+
+        let app = App::new(backend, move || {
+            if state.get() {
+                node("Button")
+            } else {
+                node("Text")
+            }
+        });
+
+        app.repaint();
+        set_state.set(true);
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.mounts, 1);
+        assert_eq!(snapshot.updates, 1);
+    }
+}

@@ -8,16 +8,3 @@ pub use ios::NativeBackend;
 
 #[cfg(not(target_os = "ios"))]
 pub use fallback::NativeBackend;
-
-#[derive(Default)]
-pub struct NativeBackend;
-
-impl Backend for NativeBackend {
-    fn mount(&mut self, view: &View) {
-        println!("[native] mount\n{}", debug_tree(view));
-    }
-
-    fn update(&mut self, view: &View) {
-        println!("[native] update\n{}", debug_tree(view));
-    }
-}

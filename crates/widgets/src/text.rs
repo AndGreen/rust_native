@@ -38,11 +38,11 @@ impl TextView {
         &self.content
     }
 
-    pub fn font(&self) -> Option<&Font> {
+    pub fn font_value(&self) -> Option<&Font> {
         self.font.as_ref()
     }
 
-    pub fn color(&self) -> Option<&Color> {
+    pub fn color_value(&self) -> Option<&Color> {
         self.color.as_ref()
     }
 }
@@ -71,5 +71,31 @@ impl WidgetElement for TextView {
 impl IntoView for TextView {
     fn into_view(self) -> View {
         View::new(self, Vec::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::font::FontWeight;
+
+    #[test]
+    fn text_builder_sets_content_font_and_color() {
+        let color = Color::new(0.2, 0.3, 0.4).with_alpha(0.9);
+        let view = TextView::new("hello")
+            .font(Font::semibold(18.0))
+            .color(color);
+
+        assert_eq!(view.content(), "hello");
+
+        let font = view.font_value().expect("font should be set");
+        assert_eq!(font.size, 18.0);
+        assert!(matches!(font.weight, FontWeight::SemiBold));
+
+        let actual_color = view.color_value().expect("color should be set");
+        assert_eq!(actual_color.r, 0.2);
+        assert_eq!(actual_color.g, 0.3);
+        assert_eq!(actual_color.b, 0.4);
+        assert_eq!(actual_color.a, 0.9);
     }
 }

@@ -68,3 +68,39 @@ impl fmt::Debug for View {
             .finish()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestElement(&'static str);
+
+    impl WidgetElement for TestElement {
+        fn name(&self) -> &'static str {
+            self.0
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+    }
+
+    #[test]
+    fn view_new_exposes_element_and_children() {
+        let child = View::new(TestElement("Child"), Vec::new());
+        let root = View::new(TestElement("Root"), vec![child]);
+
+        assert_eq!(root.element().name(), "Root");
+        assert_eq!(root.children().len(), 1);
+        assert_eq!(root.children()[0].element().name(), "Child");
+    }
+
+    #[test]
+    fn fragment_wraps_children_with_fragment_element() {
+        let child = View::new(TestElement("Child"), Vec::new());
+        let fragment = View::fragment(vec![child]);
+
+        assert_eq!(fragment.element().name(), "Fragment");
+        assert_eq!(fragment.children().len(), 1);
+    }
+}

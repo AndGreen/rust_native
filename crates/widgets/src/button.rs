@@ -61,3 +61,23 @@ impl IntoView for ButtonView {
         View::new(self, Vec::new())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[test]
+    fn trigger_invokes_registered_click_handler() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let calls_for_handler = calls.clone();
+        let button = ButtonView::new("Like").on_click(move || {
+            calls_for_handler.fetch_add(1, Ordering::Relaxed);
+        });
+
+        button.trigger();
+        button.trigger();
+
+        assert_eq!(calls.load(Ordering::Relaxed), 2);
+    }
+}

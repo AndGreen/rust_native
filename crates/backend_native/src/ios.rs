@@ -176,11 +176,11 @@ unsafe fn build_label(text: &TextView) -> StrongPtr {
     let ns_text = nsstring(text.content());
     let () = msg_send![label, setText: ns_text.as_ptr()];
 
-    if let Some(color) = text.color() {
+    if let Some(color) = text.color_value() {
         let ui_color = ui_color(color);
         let () = msg_send![label, setTextColor: ui_color];
     }
-    if let Some(font) = text.font() {
+    if let Some(font) = text.font_value() {
         let ui_font = ui_font(font);
         let () = msg_send![label, setFont: ui_font];
     }

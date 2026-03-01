@@ -34,7 +34,7 @@ impl ImageView {
         &self.source
     }
 
-    pub fn size(&self) -> (Option<f32>, Option<f32>) {
+    pub fn dimensions(&self) -> (Option<f32>, Option<f32>) {
         (self.width, self.height)
     }
 
@@ -60,5 +60,21 @@ impl WidgetElement for ImageView {
 impl IntoView for ImageView {
     fn into_view(self) -> View {
         View::new(self, Vec::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn image_builder_sets_dimensions_and_corner_radius() {
+        let view = ImageView::new("cover.jpg")
+            .size(60.0, 80.0)
+            .corner_radius(8.0);
+
+        assert_eq!(view.source(), "cover.jpg");
+        assert_eq!(view.dimensions(), (Some(60.0), Some(80.0)));
+        assert_eq!(view.corner_radius_value(), Some(8.0));
     }
 }

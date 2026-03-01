@@ -40,3 +40,33 @@ impl IntoView for ListView {
         View::new(ListElement { len }, self.children)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct ItemElement;
+
+    impl WidgetElement for ItemElement {
+        fn name(&self) -> &'static str {
+            "Item"
+        }
+
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+    }
+
+    #[test]
+    fn list_from_iterator_builds_list_view_with_children() {
+        let list = ListView::from_iterator([1, 2, 3], |_| View::new(ItemElement, Vec::new()));
+        let view = list.into_view();
+
+        assert_eq!(view.element().name(), "List");
+        assert_eq!(view.children().len(), 3);
+        assert!(view
+            .children()
+            .iter()
+            .all(|child| child.element().name() == "Item"));
+    }
+}
