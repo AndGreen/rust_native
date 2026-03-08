@@ -3,9 +3,12 @@ use std::collections::HashSet;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock, Weak};
 
+type Callback = Arc<dyn Fn() + Send + Sync>;
+type CallbackQueue = Vec<Callback>;
+
 thread_local! {
-    static BATCH_QUEUE: RefCell<Option<Vec<Arc<dyn Fn() + Send + Sync>>>> = RefCell::new(None);
-    static READ_TRACKER: RefCell<Option<Vec<ErasedSignalHandle>>> = RefCell::new(None);
+    static BATCH_QUEUE: RefCell<Option<CallbackQueue>> = const { RefCell::new(None) };
+    static READ_TRACKER: RefCell<Option<Vec<ErasedSignalHandle>>> = const { RefCell::new(None) };
 }
 
 /// Creates a new signal/value pair.
@@ -79,7 +82,7 @@ where
     where
         F: Fn() + Send + Sync + 'static,
     {
-        let callback: Arc<dyn Fn() + Send + Sync> = Arc::new(callback);
+        let callback: Callback = Arc::new(callback);
         self.inner
             .observers
             .lock()
@@ -122,7 +125,7 @@ pub fn collect_reads<R>(f: impl FnOnce() -> R) -> (R, Vec<ErasedSignalHandle>) {
 
 pub trait ErasedSignal: Send + Sync {
     fn id(&self) -> u64;
-    fn subscribe_callback(&self, callback: Arc<dyn Fn() + Send + Sync>) -> SignalSubscription;
+    fn subscribe_callback(&self, callback: Callback) -> SignalSubscription;
 }
 
 #[derive(Clone)]
@@ -135,7 +138,7 @@ impl ErasedSignalHandle {
         self.inner.id()
     }
 
-    pub fn subscribe_callback(&self, callback: Arc<dyn Fn() + Send + Sync>) -> SignalSubscription {
+    pub fn subscribe_callback(&self, callback: Callback) -> SignalSubscription {
         self.inner.subscribe_callback(callback)
     }
 }
@@ -148,7 +151,7 @@ where
         self.inner.id
     }
 
-    fn subscribe_callback(&self, callback: Arc<dyn Fn() + Send + Sync>) -> SignalSubscription {
+    fn subscribe_callback(&self, callback: Callback) -> SignalSubscription {
         self.inner
             .observers
             .lock()

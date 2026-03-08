@@ -1,7 +1,9 @@
 [package]
-name = "backend_api"
+name = "vdom_runtime"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+mf_core = { workspace = true }
+mf_widgets = { workspace = true }
 native_schema = { workspace = true }

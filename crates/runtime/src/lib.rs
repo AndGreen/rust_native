@@ -1,14 +1,18 @@
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
-use backend_api::Backend;
-use mf_core::diff::DiffEngine;
+use backend_api::{Backend, BackendError};
 use mf_core::signal::{batch, collect_reads, signal, Setter, Signal};
 use mf_core::View;
+use native_schema::UiEvent;
 use std::cell::RefCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
+use vdom_runtime::VdomRuntime;
+
+type Cleanup = Box<dyn FnOnce() + Send>;
+type CleanupFrame = Vec<Cleanup>;
 
 pub struct App<B>
 where
@@ -23,8 +27,7 @@ where
 {
     backend: Mutex<B>,
     builder: Arc<dyn Fn() -> View + Send + Sync>,
-    current: Mutex<Option<View>>,
-    diff: DiffEngine,
+    vdom: Mutex<VdomRuntime>,
     subscriptions: Mutex<Vec<mf_core::signal::SignalSubscription>>,
 }
 
@@ -40,8 +43,7 @@ where
             inner: Arc::new(AppInner {
                 backend: Mutex::new(backend),
                 builder: Arc::new(builder),
-                current: Mutex::new(None),
-                diff: DiffEngine::new(),
+                vdom: Mutex::new(VdomRuntime::new()),
                 subscriptions: Mutex::new(Vec::new()),
             }),
         }
@@ -49,9 +51,6 @@ where
 
     pub fn repaint(&self) {
         let (next, reads) = collect_reads(|| (self.inner.builder)());
-        let mut backend = self.inner.backend.lock().unwrap();
-        let mut current = self.inner.current.lock().unwrap();
-
         // Re-subscribe to signals read during render.
         let mut subscriptions = self.inner.subscriptions.lock().unwrap();
         subscriptions.clear();
@@ -67,13 +66,30 @@ where
             }
         }
 
-        let patches = self.inner.diff.diff(current.as_ref(), &next);
-        if current.is_none() {
-            backend.mount(&next);
-        } else if !patches.is_empty() {
-            backend.update(&next);
+        let mut vdom = self.inner.vdom.lock().unwrap();
+        let batch = vdom.render(&next);
+        let mut backend = self.inner.backend.lock().unwrap();
+
+        if !batch.mutations.is_empty() || !batch.layout.is_empty() {
+            let result = backend
+                .apply_mutations(&batch.mutations)
+                .and_then(|_| backend.apply_layout(&batch.layout))
+                .and_then(|_| backend.flush());
+
+            if let Err(BackendError::BatchRejected(_)) = result {
+                vdom.request_full_resync();
+                let retry = vdom.render(&next);
+                backend
+                    .apply_mutations(&retry.mutations)
+                    .and_then(|_| backend.apply_layout(&retry.layout))
+                    .and_then(|_| backend.flush())
+                    .unwrap();
+            }
         }
-        *current = Some(next);
+
+        for event in backend.drain_events() {
+            dispatch_event(&vdom, event);
+        }
     }
 
     /// Convenience helper: repaint immediately, then block for `duration` to allow async tasks/intervals.
@@ -129,7 +145,7 @@ where
 }
 
 thread_local! {
-    static CLEANUP_STACK: RefCell<Vec<Vec<Box<dyn FnOnce() + Send>>>> = RefCell::new(Vec::new());
+    static CLEANUP_STACK: RefCell<Vec<CleanupFrame>> = RefCell::new(Vec::new());
 }
 
 /// Registers a cleanup to run when the current scope ends.
@@ -146,7 +162,7 @@ where
 
 /// RAII scope used to collect `on_cleanup` callbacks similar to SolidJS.
 pub struct Scope {
-    cleanups: Vec<Box<dyn FnOnce() + Send>>,
+    cleanups: CleanupFrame,
 }
 
 impl Scope {
@@ -165,6 +181,12 @@ impl Scope {
             .unwrap_or_default();
         self.cleanups.extend(frame);
         result
+    }
+}
+
+impl Default for Scope {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -220,22 +242,33 @@ where
     }
 }
 
+fn dispatch_event(vdom: &VdomRuntime, event: UiEvent) {
+    vdom.dispatch_event(event);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use backend_api::Backend;
     use mf_core::view::WidgetElement;
+    use mf_core::IntoView;
     use mf_core::View;
+    use mf_widgets::{Button, Text};
 
     #[derive(Default, Clone)]
     struct Counts {
-        mounts: usize,
-        updates: usize,
+        apply_mutations: usize,
+        apply_layout: usize,
+        flushes: usize,
+        last_mutation_count: usize,
     }
 
     #[derive(Clone)]
     struct TestBackend {
         counts: Arc<Mutex<Counts>>,
+        pending_events: Arc<Mutex<Vec<UiEvent>>>,
+        reject_once: Arc<Mutex<bool>>,
+        emit_tap_once: Arc<Mutex<bool>>,
     }
 
     impl TestBackend {
@@ -244,6 +277,9 @@ mod tests {
             (
                 Self {
                     counts: counts.clone(),
+                    pending_events: Arc::new(Mutex::new(Vec::new())),
+                    reject_once: Arc::new(Mutex::new(false)),
+                    emit_tap_once: Arc::new(Mutex::new(false)),
                 },
                 counts,
             )
@@ -251,12 +287,48 @@ mod tests {
     }
 
     impl Backend for TestBackend {
-        fn mount(&mut self, _view: &View) {
-            self.counts.lock().unwrap().mounts += 1;
+        fn apply_mutations(
+            &mut self,
+            mutations: &[native_schema::Mutation],
+        ) -> Result<(), BackendError> {
+            self.counts.lock().unwrap().apply_mutations += 1;
+            self.counts.lock().unwrap().last_mutation_count = mutations.len();
+            let mut emit_tap_once = self.emit_tap_once.lock().unwrap();
+            if *emit_tap_once {
+                if let Some(id) = mutations.iter().find_map(|mutation| match mutation {
+                    native_schema::Mutation::AttachEventListener {
+                        id,
+                        event: native_schema::EventKind::Tap,
+                    } => Some(*id),
+                    _ => None,
+                }) {
+                    self.pending_events.lock().unwrap().push(UiEvent::Tap { id });
+                    *emit_tap_once = false;
+                }
+            }
+            let mut reject_once = self.reject_once.lock().unwrap();
+            if *reject_once {
+                *reject_once = false;
+                return Err(BackendError::BatchRejected("retry".into()));
+            }
+            Ok(())
         }
 
-        fn update(&mut self, _view: &View) {
-            self.counts.lock().unwrap().updates += 1;
+        fn apply_layout(
+            &mut self,
+            _frames: &[native_schema::LayoutFrame],
+        ) -> Result<(), BackendError> {
+            self.counts.lock().unwrap().apply_layout += 1;
+            Ok(())
+        }
+
+        fn flush(&mut self) -> Result<(), BackendError> {
+            self.counts.lock().unwrap().flushes += 1;
+            Ok(())
+        }
+
+        fn drain_events(&mut self) -> Vec<UiEvent> {
+            self.pending_events.lock().unwrap().drain(..).collect()
         }
     }
 
@@ -277,19 +349,20 @@ mod tests {
     }
 
     #[test]
-    fn first_repaint_mounts_without_update() {
+    fn first_repaint_emits_mutations_and_flushes() {
         let (backend, counts) = TestBackend::new();
         let app = App::new(backend, || node("Root"));
 
         app.repaint();
 
         let snapshot = counts.lock().unwrap().clone();
-        assert_eq!(snapshot.mounts, 1);
-        assert_eq!(snapshot.updates, 0);
+        assert_eq!(snapshot.apply_mutations, 1);
+        assert_eq!(snapshot.apply_layout, 1);
+        assert_eq!(snapshot.flushes, 1);
     }
 
     #[test]
-    fn repaint_without_tree_changes_does_not_call_update() {
+    fn repaint_without_tree_changes_skips_backend_calls() {
         let (backend, counts) = TestBackend::new();
         let app = App::new(backend, || node("Root"));
 
@@ -297,20 +370,20 @@ mod tests {
         app.repaint();
 
         let snapshot = counts.lock().unwrap().clone();
-        assert_eq!(snapshot.mounts, 1);
-        assert_eq!(snapshot.updates, 0);
+        assert_eq!(snapshot.apply_mutations, 1);
+        assert_eq!(snapshot.flushes, 1);
     }
 
     #[test]
-    fn signal_change_that_alters_tree_shape_triggers_update() {
+    fn signal_change_that_alters_tree_shape_triggers_batch_update() {
         let (backend, counts) = TestBackend::new();
         let (state, set_state) = create_signal(false);
 
         let app = App::new(backend, move || {
             if state.get() {
-                node("Button")
+                Button("Tap").into_view()
             } else {
-                node("Text")
+                Text("Value").into_view()
             }
         });
 
@@ -318,7 +391,37 @@ mod tests {
         set_state.set(true);
 
         let snapshot = counts.lock().unwrap().clone();
-        assert_eq!(snapshot.mounts, 1);
-        assert_eq!(snapshot.updates, 1);
+        assert_eq!(snapshot.apply_mutations, 2);
+        assert_eq!(snapshot.flushes, 2);
+    }
+
+    #[test]
+    fn batch_rejection_triggers_full_resync_retry() {
+        let (backend, counts) = TestBackend::new();
+        *backend.reject_once.lock().unwrap() = true;
+        let app = App::new(backend, || node("Root"));
+
+        app.repaint();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 2);
+        assert_eq!(snapshot.flushes, 1);
+    }
+
+    #[test]
+    fn drained_events_are_dispatched() {
+        let (backend, _counts) = TestBackend::new();
+        let (value, set_value) = create_signal(0usize);
+        *backend.emit_tap_once.lock().unwrap() = true;
+
+        let app = App::new(backend.clone(), move || {
+            let setter = set_value.clone();
+            Button("Tap")
+                .on_click(move || setter.update(|current| *current += 1))
+                .into_view()
+        });
+
+        app.repaint();
+        assert_eq!(value.get(), 1);
     }
 }

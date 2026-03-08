@@ -1,19 +1,28 @@
-use mf_core::View;
-
 pub trait Backend: Send {
-    fn mount(&mut self, view: &View);
-    fn update(&mut self, view: &View);
+    fn apply_mutations(
+        &mut self,
+        mutations: &[native_schema::Mutation],
+    ) -> Result<(), BackendError>;
+    fn apply_layout(
+        &mut self,
+        frames: &[native_schema::LayoutFrame],
+    ) -> Result<(), BackendError>;
+    fn flush(&mut self) -> Result<(), BackendError>;
+
+    fn drain_events(&mut self) -> Vec<native_schema::UiEvent> {
+        Vec::new()
+    }
 }
 
-pub fn debug_tree(view: &View) -> String {
-    fn recurse(view: &View, depth: usize, out: &mut String) {
-        let indent = "  ".repeat(depth);
-        out.push_str(&format!("{}{}\n", indent, view.element().describe()));
-        for child in view.children() {
-            recurse(child, depth + 1, out);
-        }
-    }
-    let mut buffer = String::new();
-    recurse(view, 0, &mut buffer);
-    buffer
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BackendError {
+    BatchRejected(String),
+}
+
+pub fn debug_mutations(mutations: &[native_schema::Mutation]) -> String {
+    format!("{mutations:#?}")
+}
+
+pub fn debug_layout(frames: &[native_schema::LayoutFrame]) -> String {
+    format!("{frames:#?}")
 }

@@ -15,6 +15,12 @@ pub struct VStack {
     alignment: Alignment,
 }
 
+impl Default for VStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VStack {
     pub fn new() -> Self {
         Self {
@@ -59,6 +65,12 @@ pub struct HStack {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+}
+
+impl Default for HStack {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HStack {

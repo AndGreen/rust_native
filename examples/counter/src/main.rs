@@ -7,7 +7,7 @@ use mf_widgets::prelude::*;
 
 fn main() {
     // All reactive state is created inside the app initializer.
-    let app = App::new(NativeBackend::default(), {
+    let app = App::new(NativeBackend, {
         let (count, set_count) = create_signal(0i32);
 
         // Auto-increment every second; handle lives as long as the closure does.

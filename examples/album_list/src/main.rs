@@ -29,7 +29,7 @@ fn main() {
         },
     ];
 
-    let app = App::new(NativeBackend::default(), {
+    let app = App::new(NativeBackend, {
         let albums = albums.clone();
         move || {
             let data = albums.clone();

@@ -14,12 +14,10 @@ impl DiffEngine {
     }
 
     pub fn diff(&self, previous: Option<&View>, next: &View) -> Vec<Patch> {
-        if previous.is_none() {
-            vec![Patch::Replace]
-        } else if Self::equals(previous.unwrap(), next) {
-            Vec::new()
-        } else {
-            vec![Patch::Replace]
+        match previous {
+            None => vec![Patch::Replace],
+            Some(previous) if Self::equals(previous, next) => Vec::new(),
+            Some(_) => vec![Patch::Replace],
         }
     }
 
