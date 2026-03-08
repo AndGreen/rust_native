@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 use backend_api::{Backend, BackendError};
-use native_schema::{ElementKind, EventKind, LayoutFrame, Mutation, PropKey, PropValue, UiEvent, UiNodeId};
+use native_schema::{
+    ElementKind, EventKind, LayoutFrame, Mutation, PropKey, PropValue, UiEvent, UiNodeId,
+};
 
 /// Temporary iOS backend that accepts canonical batches and maintains a shadow tree.
 /// Incremental UIKit execution is deferred to the dedicated P0-06 step.
@@ -64,7 +66,11 @@ impl ShadowState {
             Mutation::SetProp { id, key, value } => {
                 self.node_mut(*id)?.props.insert(*key, value.clone());
             }
-            Mutation::InsertChild { parent, child, index } => {
+            Mutation::InsertChild {
+                parent,
+                child,
+                index,
+            } => {
                 self.node_mut(*child)?.parent = Some(*parent);
                 let children = &mut self.node_mut(*parent)?.children;
                 let index = (*index as usize).min(children.len());

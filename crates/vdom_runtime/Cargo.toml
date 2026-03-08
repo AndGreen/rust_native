@@ -7,3 +7,4 @@ edition = "2021"
 mf_core = { workspace = true }
 mf_widgets = { workspace = true }
 native_schema = { workspace = true }
+taffy = "0.3"

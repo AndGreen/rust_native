@@ -201,6 +201,7 @@ dependencies = [
  "mf_core",
  "mf_widgets",
  "native_schema",
+ "taffy",
 ]
 
 [[package]]

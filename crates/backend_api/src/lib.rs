@@ -3,10 +3,7 @@ pub trait Backend: Send {
         &mut self,
         mutations: &[native_schema::Mutation],
     ) -> Result<(), BackendError>;
-    fn apply_layout(
-        &mut self,
-        frames: &[native_schema::LayoutFrame],
-    ) -> Result<(), BackendError>;
+    fn apply_layout(&mut self, frames: &[native_schema::LayoutFrame]) -> Result<(), BackendError>;
     fn flush(&mut self) -> Result<(), BackendError>;
 
     fn drain_events(&mut self) -> Vec<native_schema::UiEvent> {

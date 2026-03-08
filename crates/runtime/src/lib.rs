@@ -26,6 +26,7 @@ where
     B: Backend + Send + 'static,
 {
     backend: Mutex<B>,
+    host_size: HostSize,
     builder: Arc<dyn Fn() -> View + Send + Sync>,
     vdom: Mutex<VdomRuntime>,
     subscriptions: Mutex<Vec<mf_core::signal::SignalSubscription>>,
@@ -39,9 +40,17 @@ where
     where
         F: Fn() -> View + Send + Sync + 'static,
     {
+        Self::new_with_host_size(backend, HostSize::default(), builder)
+    }
+
+    pub fn new_with_host_size<F>(backend: B, host_size: HostSize, builder: F) -> Self
+    where
+        F: Fn() -> View + Send + Sync + 'static,
+    {
         Self {
             inner: Arc::new(AppInner {
                 backend: Mutex::new(backend),
+                host_size,
                 builder: Arc::new(builder),
                 vdom: Mutex::new(VdomRuntime::new()),
                 subscriptions: Mutex::new(Vec::new()),
@@ -67,7 +76,7 @@ where
         }
 
         let mut vdom = self.inner.vdom.lock().unwrap();
-        let batch = vdom.render(&next);
+        let batch = vdom.render(&next, self.inner.host_size);
         let mut backend = self.inner.backend.lock().unwrap();
 
         if !batch.mutations.is_empty() || !batch.layout.is_empty() {
@@ -78,7 +87,7 @@ where
 
             if let Err(BackendError::BatchRejected(_)) = result {
                 vdom.request_full_resync();
-                let retry = vdom.render(&next);
+                let retry = vdom.render(&next, self.inner.host_size);
                 backend
                     .apply_mutations(&retry.mutations)
                     .and_then(|_| backend.apply_layout(&retry.layout))
@@ -127,6 +136,7 @@ where
 }
 
 pub use mf_core::signal::{Setter as SignalSetter, Signal as RuntimeSignal, SignalSubscription};
+pub use vdom_runtime::HostSize;
 
 /// Alias mirroring SolidJS nomenclature.
 pub fn create_signal<T>(value: T) -> (Signal<T>, Setter<T>)
@@ -261,6 +271,7 @@ mod tests {
         apply_layout: usize,
         flushes: usize,
         last_mutation_count: usize,
+        last_layout_count: usize,
     }
 
     #[derive(Clone)]
@@ -302,7 +313,10 @@ mod tests {
                     } => Some(*id),
                     _ => None,
                 }) {
-                    self.pending_events.lock().unwrap().push(UiEvent::Tap { id });
+                    self.pending_events
+                        .lock()
+                        .unwrap()
+                        .push(UiEvent::Tap { id });
                     *emit_tap_once = false;
                 }
             }
@@ -316,9 +330,10 @@ mod tests {
 
         fn apply_layout(
             &mut self,
-            _frames: &[native_schema::LayoutFrame],
+            frames: &[native_schema::LayoutFrame],
         ) -> Result<(), BackendError> {
             self.counts.lock().unwrap().apply_layout += 1;
+            self.counts.lock().unwrap().last_layout_count = frames.len();
             Ok(())
         }
 
@@ -351,20 +366,21 @@ mod tests {
     #[test]
     fn first_repaint_emits_mutations_and_flushes() {
         let (backend, counts) = TestBackend::new();
-        let app = App::new(backend, || node("Root"));
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || node("Root"));
 
         app.repaint();
 
         let snapshot = counts.lock().unwrap().clone();
         assert_eq!(snapshot.apply_mutations, 1);
         assert_eq!(snapshot.apply_layout, 1);
+        assert_eq!(snapshot.last_layout_count, 1);
         assert_eq!(snapshot.flushes, 1);
     }
 
     #[test]
     fn repaint_without_tree_changes_skips_backend_calls() {
         let (backend, counts) = TestBackend::new();
-        let app = App::new(backend, || node("Root"));
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || node("Root"));
 
         app.repaint();
         app.repaint();
@@ -379,7 +395,7 @@ mod tests {
         let (backend, counts) = TestBackend::new();
         let (state, set_state) = create_signal(false);
 
-        let app = App::new(backend, move || {
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), move || {
             if state.get() {
                 Button("Tap").into_view()
             } else {
@@ -399,7 +415,7 @@ mod tests {
     fn batch_rejection_triggers_full_resync_retry() {
         let (backend, counts) = TestBackend::new();
         *backend.reject_once.lock().unwrap() = true;
-        let app = App::new(backend, || node("Root"));
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || node("Root"));
 
         app.repaint();
 
@@ -414,12 +430,13 @@ mod tests {
         let (value, set_value) = create_signal(0usize);
         *backend.emit_tap_once.lock().unwrap() = true;
 
-        let app = App::new(backend.clone(), move || {
-            let setter = set_value.clone();
-            Button("Tap")
-                .on_click(move || setter.update(|current| *current += 1))
-                .into_view()
-        });
+        let app =
+            App::new_with_host_size(backend.clone(), HostSize::new(390.0, 844.0), move || {
+                let setter = set_value.clone();
+                Button("Tap")
+                    .on_click(move || setter.update(|current| *current += 1))
+                    .into_view()
+            });
 
         app.repaint();
         assert_eq!(value.get(), 1);

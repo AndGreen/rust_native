@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use backend_native::NativeBackend;
 use mf_macros::ui;
-use mf_runtime::{batch_updates, create_signal, start_interval, App};
+use mf_runtime::{batch_updates, create_signal, start_interval, App, HostSize};
 use mf_widgets::prelude::*;
 
 fn main() {
     // All reactive state is created inside the app initializer.
-    let app = App::new(NativeBackend, {
+    let app = App::new_with_host_size(NativeBackend, HostSize::new(390.0, 844.0), {
         let (count, set_count) = create_signal(0i32);
 
         // Auto-increment every second; handle lives as long as the closure does.

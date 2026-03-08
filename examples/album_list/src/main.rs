@@ -1,6 +1,6 @@
 use backend_native::NativeBackend;
 use mf_macros::ui;
-use mf_runtime::App;
+use mf_runtime::{App, HostSize};
 use mf_widgets::prelude::*;
 
 #[derive(Clone)]
@@ -29,7 +29,7 @@ fn main() {
         },
     ];
 
-    let app = App::new(NativeBackend, {
+    let app = App::new_with_host_size(NativeBackend, HostSize::new(390.0, 844.0), {
         let albums = albums.clone();
         move || {
             let data = albums.clone();
