@@ -2,6 +2,7 @@
 members = [
     "crates/core",
     "crates/macros",
+    "crates/native_schema",
     "crates/backend_api",
     "crates/backend_native",
     "crates/backend_wgpu",
@@ -19,6 +20,7 @@ version = "0.1.0"
 [workspace.dependencies]
 mf_core = { path = "crates/core" }
 mf_macros = { path = "crates/macros" }
+native_schema = { path = "crates/native_schema" }
 backend_api = { path = "crates/backend_api" }
 backend_native = { path = "crates/backend_native" }
 backend_wgpu = { path = "crates/backend_wgpu" }

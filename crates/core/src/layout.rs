@@ -29,7 +29,10 @@ pub struct ComputedLayout {
 
 impl Default for ComputedLayout {
     fn default() -> Self {
-        Self { width: 0.0, height: 0.0 }
+        Self {
+            width: 0.0,
+            height: 0.0,
+        }
     }
 }
 
@@ -37,7 +40,9 @@ impl Default for ComputedLayout {
 /// directly into Taffy and returns the resolved size for the provided node.
 pub fn compute_layout(root: &LayoutNode, size: Size<AvailableSpace>) -> ComputedLayout {
     let mut taffy = Taffy::new();
-    let node = taffy.new_leaf(root.style().clone()).unwrap_or_else(|_| taffy.new_leaf(Style::DEFAULT).unwrap());
+    let node = taffy
+        .new_leaf(root.style().clone())
+        .unwrap_or_else(|_| taffy.new_leaf(Style::DEFAULT).unwrap());
     let _ = taffy.compute_layout(node, size);
     taffy
         .layout(node)

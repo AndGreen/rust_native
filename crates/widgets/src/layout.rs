@@ -42,12 +42,15 @@ impl VStack {
 
 impl WithChildren for VStack {
     fn with_children(self, children: Vec<View>) -> View {
-        View::new(StackElement {
-            axis: Axis::Vertical,
-            spacing: self.spacing,
-            padding: self.padding,
-            alignment: self.alignment,
-        }, children)
+        View::new(
+            StackElement {
+                axis: Axis::Vertical,
+                spacing: self.spacing,
+                padding: self.padding,
+                alignment: self.alignment,
+            },
+            children,
+        )
     }
 }
 
@@ -85,12 +88,15 @@ impl HStack {
 
 impl WithChildren for HStack {
     fn with_children(self, children: Vec<View>) -> View {
-        View::new(StackElement {
-            axis: Axis::Horizontal,
-            spacing: self.spacing,
-            padding: self.padding,
-            alignment: self.alignment,
-        }, children)
+        View::new(
+            StackElement {
+                axis: Axis::Horizontal,
+                spacing: self.spacing,
+                padding: self.padding,
+                alignment: self.alignment,
+            },
+            children,
+        )
     }
 }
 

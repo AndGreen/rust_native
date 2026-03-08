@@ -58,7 +58,10 @@ impl WidgetElement for TextView {
             description.push_str(&format!("[size: {} weight: {:?}]", font.size, font.weight));
         }
         if let Some(color) = &self.color {
-            description.push_str(&format!("[color: {:.2},{:.2},{:.2}]", color.r, color.g, color.b));
+            description.push_str(&format!(
+                "[color: {:.2},{:.2},{:.2}]",
+                color.r, color.g, color.b
+            ));
         }
         description
     }

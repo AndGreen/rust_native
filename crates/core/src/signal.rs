@@ -1,7 +1,7 @@
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, RwLock, Weak};
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, RwLock, Weak};
 
 thread_local! {
     static BATCH_QUEUE: RefCell<Option<Vec<Arc<dyn Fn() + Send + Sync>>>> = RefCell::new(None);
@@ -14,7 +14,12 @@ where
     T: Send + Sync + 'static,
 {
     let inner = Arc::new(SignalInner::new(value));
-    (Signal { inner: inner.clone() }, Setter { inner })
+    (
+        Signal {
+            inner: inner.clone(),
+        },
+        Setter { inner },
+    )
 }
 
 /// Groups multiple signal updates and dispatches their notifications once after `f` completes.

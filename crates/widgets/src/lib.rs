@@ -18,7 +18,6 @@ pub use list::ListView;
 pub use text::TextView;
 
 pub mod prelude {
-    pub use mf_core::dsl::{IntoView, WithChildren};
     pub use crate::button::ButtonView;
     pub use crate::color::Color;
     pub use crate::font::{Font, FontWeight};
@@ -27,4 +26,5 @@ pub mod prelude {
     pub use crate::list::ListView;
     pub use crate::text::TextView;
     pub use crate::{Button, HStack, Image, List, Text, VStack};
+    pub use mf_core::dsl::{IntoView, WithChildren};
 }

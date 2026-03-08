@@ -32,7 +32,10 @@ impl DiffEngine {
         if a_children.len() != b_children.len() {
             return false;
         }
-        a_children.iter().zip(b_children.iter()).all(|(x, y)| Self::equals(x, y))
+        a_children
+            .iter()
+            .zip(b_children.iter())
+            .all(|(x, y)| Self::equals(x, y))
     }
 }
 

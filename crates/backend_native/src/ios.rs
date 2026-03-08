@@ -153,11 +153,7 @@ unsafe fn build_view(view: &View) -> StrongPtr {
     }
 
     // Stack layouts (HStack/VStack)
-    if let Some(stack) = view
-        .element()
-        .as_any()
-        .downcast_ref::<StackElement>()
-    {
+    if let Some(stack) = view.element().as_any().downcast_ref::<StackElement>() {
         return build_stack(stack, view.children());
     }
 

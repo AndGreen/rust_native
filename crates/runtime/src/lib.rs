@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
 
 use backend_api::Backend;
 use mf_core::diff::DiffEngine;
@@ -110,9 +110,7 @@ where
     signal(value)
 }
 
-pub use mf_core::signal::{
-    Setter as SignalSetter, Signal as RuntimeSignal, SignalSubscription,
-};
+pub use mf_core::signal::{Setter as SignalSetter, Signal as RuntimeSignal, SignalSubscription};
 
 /// Alias mirroring SolidJS nomenclature.
 pub fn create_signal<T>(value: T) -> (Signal<T>, Setter<T>)
@@ -153,14 +151,18 @@ pub struct Scope {
 
 impl Scope {
     pub fn new() -> Self {
-        Self { cleanups: Vec::new() }
+        Self {
+            cleanups: Vec::new(),
+        }
     }
 
     /// Runs `f` with a cleanup frame; any `on_cleanup` calls inside will attach to this scope.
     pub fn run<R>(&mut self, f: impl FnOnce() -> R) -> R {
         CLEANUP_STACK.with(|stack| stack.borrow_mut().push(Vec::new()));
         let result = f();
-        let frame = CLEANUP_STACK.with(|stack| stack.borrow_mut().pop()).unwrap_or_default();
+        let frame = CLEANUP_STACK
+            .with(|stack| stack.borrow_mut().pop())
+            .unwrap_or_default();
         self.cleanups.extend(frame);
         result
     }
