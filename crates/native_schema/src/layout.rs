@@ -9,7 +9,7 @@ pub struct EdgeInsets {
 }
 
 impl EdgeInsets {
-    pub fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
+    pub const fn new(top: f32, right: f32, bottom: f32, left: f32) -> Self {
         Self {
             top,
             right,
@@ -18,8 +18,25 @@ impl EdgeInsets {
         }
     }
 
-    pub fn all(value: f32) -> Self {
+    pub const fn all(value: f32) -> Self {
         Self::new(value, value, value, value)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SafeAreaEdges {
+    Top,
+    TopBottom,
+    All,
+}
+
+impl SafeAreaEdges {
+    pub fn apply_to(self, insets: EdgeInsets) -> EdgeInsets {
+        match self {
+            Self::Top => EdgeInsets::new(insets.top, 0.0, 0.0, 0.0),
+            Self::TopBottom => EdgeInsets::new(insets.top, 0.0, insets.bottom, 0.0),
+            Self::All => insets,
+        }
     }
 }
 
@@ -72,6 +89,16 @@ mod tests {
         assert_eq!(insets.right, 12.0);
         assert_eq!(insets.bottom, 12.0);
         assert_eq!(insets.left, 12.0);
+    }
+
+    #[test]
+    fn safe_area_edges_top_bottom_only_keeps_vertical_insets() {
+        let insets = EdgeInsets::new(59.0, 12.0, 34.0, 8.0);
+
+        assert_eq!(
+            SafeAreaEdges::TopBottom.apply_to(insets),
+            EdgeInsets::new(59.0, 0.0, 34.0, 0.0)
+        );
     }
 
     #[test]

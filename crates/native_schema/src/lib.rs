@@ -8,7 +8,7 @@ mod layout;
 mod mutation;
 
 pub use events::UiEvent;
-pub use layout::{DimensionValue, EdgeInsets, LayoutFrame, LayoutFrameValidationError};
+pub use layout::{DimensionValue, EdgeInsets, LayoutFrame, LayoutFrameValidationError, SafeAreaEdges};
 pub use mutation::{
     Alignment, Axis, ColorValue, ElementKind, EventKind, FontWeight, Mutation, PropKey, PropValue,
     ProtocolVersion, UiNodeId,

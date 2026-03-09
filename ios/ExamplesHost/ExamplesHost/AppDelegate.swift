@@ -9,10 +9,15 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         let bounds = UIScreen.main.bounds
+        let insets = UIEdgeInsets.zero
         let started = mf_examples_start(
             SelectedExample.current.rawValue,
             Float(bounds.width),
-            Float(bounds.height)
+            Float(bounds.height),
+            Float(insets.top),
+            Float(insets.right),
+            Float(insets.bottom),
+            Float(insets.left)
         )
         assert(started, "Failed to start Rust example")
         driver.start()
@@ -23,6 +28,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 private final class RustExampleDriver {
     private var displayLink: CADisplayLink?
     private var lastBounds: CGRect = .zero
+    private var lastInsets: UIEdgeInsets = .zero
 
     func start() {
         guard displayLink == nil else {
@@ -34,11 +40,32 @@ private final class RustExampleDriver {
     }
 
     @objc private func onFrame() {
-        let bounds = UIScreen.main.bounds
-        if bounds != lastBounds {
-            lastBounds = bounds
-            mf_examples_resize(Float(bounds.width), Float(bounds.height))
+        let metrics = currentMetrics()
+        if metrics.bounds != lastBounds || metrics.insets != lastInsets {
+            lastBounds = metrics.bounds
+            lastInsets = metrics.insets
+            mf_examples_resize(
+                Float(metrics.bounds.width),
+                Float(metrics.bounds.height),
+                Float(metrics.insets.top),
+                Float(metrics.insets.right),
+                Float(metrics.insets.bottom),
+                Float(metrics.insets.left)
+            )
         }
         mf_examples_tick()
+    }
+
+    private func currentMetrics() -> (bounds: CGRect, insets: UIEdgeInsets) {
+        guard
+            let windowScene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first,
+            let window = windowScene.windows.first(where: \.isKeyWindow)
+        else {
+            return (UIScreen.main.bounds, .zero)
+        }
+
+        return (window.bounds, window.safeAreaInsets)
     }
 }

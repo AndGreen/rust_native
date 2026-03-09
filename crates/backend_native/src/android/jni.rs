@@ -180,11 +180,12 @@ fn text_payload(text: Option<&str>) -> (*const u8, usize) {
 fn element_kind_code(kind: ElementKind) -> u32 {
     match kind {
         ElementKind::Stack => 0,
-        ElementKind::Text => 1,
-        ElementKind::Button => 2,
-        ElementKind::Image => 3,
-        ElementKind::List => 4,
-        ElementKind::Input => 5,
+        ElementKind::SafeArea => 1,
+        ElementKind::Text => 2,
+        ElementKind::Button => 3,
+        ElementKind::Image => 4,
+        ElementKind::List => 5,
+        ElementKind::Input => 6,
     }
 }
 
@@ -333,6 +334,7 @@ mod tests {
     fn codes_cover_protocol_v1_surface() {
         let kinds = [
             element_kind_code(ElementKind::Stack),
+            element_kind_code(ElementKind::SafeArea),
             element_kind_code(ElementKind::Text),
             element_kind_code(ElementKind::Button),
             element_kind_code(ElementKind::Image),
@@ -340,8 +342,8 @@ mod tests {
             element_kind_code(ElementKind::Input),
         ];
 
-        assert_eq!(kinds.len(), 6);
-        assert_eq!(kinds, [0, 1, 2, 3, 4, 5]);
+        assert_eq!(kinds.len(), 7);
+        assert_eq!(kinds, [0, 1, 2, 3, 4, 5, 6]);
         assert_eq!(event_kind_code(EventKind::Tap), 0);
         assert_eq!(event_kind_code(EventKind::TextInput), 1);
         assert_eq!(font_weight_code(FontWeight::Bold), 2);

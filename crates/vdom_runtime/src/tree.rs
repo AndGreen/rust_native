@@ -6,10 +6,11 @@ use mf_widgets::button::ButtonAction;
 use mf_widgets::button::ButtonView;
 use mf_widgets::image::ImageView;
 use mf_widgets::layout::{Alignment as WidgetAlignment, Axis as WidgetAxis, StackElement};
+use mf_widgets::safe_area::SafeArea;
 use mf_widgets::text::TextView;
 use native_schema::{
     Alignment, Axis, ColorValue, DimensionValue, EdgeInsets, ElementKind, FontWeight, PropKey,
-    PropValue, UiNodeId,
+    PropValue, SafeAreaEdges, UiNodeId,
 };
 
 #[derive(Clone)]
@@ -36,6 +37,8 @@ impl NodeDescriptor {
             Self::Element(ElementKind::Button)
         } else if view.element().as_any().is::<ImageView>() {
             Self::Element(ElementKind::Image)
+        } else if view.element().as_any().is::<SafeArea>() {
+            Self::Element(ElementKind::SafeArea)
         } else if view.element().as_any().is::<StackElement>() {
             Self::Element(ElementKind::Stack)
         } else if view.element().name() == "List" {
@@ -94,6 +97,17 @@ pub(crate) fn canonicalize_view(
             id,
             descriptor: NodeDescriptor::Element(ElementKind::Image),
             props: image_props(image),
+            text: None,
+            tap_handler: None,
+            children,
+        };
+    }
+
+    if let Some(safe_area) = view.element().as_any().downcast_ref::<SafeArea>() {
+        return CanonicalNode {
+            id,
+            descriptor: NodeDescriptor::Element(ElementKind::SafeArea),
+            props: safe_area_props(safe_area),
             text: None,
             tap_handler: None,
             children,
@@ -263,6 +277,17 @@ fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
             }),
         ),
     ]
+}
+
+fn safe_area_props(safe_area: &SafeArea) -> Vec<(PropKey, PropValue)> {
+    vec![(
+        PropKey::SafeAreaEdges,
+        PropValue::SafeAreaEdges(match safe_area.edges_value() {
+            SafeAreaEdges::Top => SafeAreaEdges::Top,
+            SafeAreaEdges::TopBottom => SafeAreaEdges::TopBottom,
+            SafeAreaEdges::All => SafeAreaEdges::All,
+        }),
+    )]
 }
 
 fn list_props() -> Vec<(PropKey, PropValue)> {

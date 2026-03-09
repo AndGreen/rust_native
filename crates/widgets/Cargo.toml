@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 mf_core = { workspace = true }
+native_schema = { workspace = true }

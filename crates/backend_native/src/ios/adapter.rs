@@ -34,7 +34,7 @@ impl PlatformAdapter for IosAdapter {
         self.ensure_host()?;
 
         let view = match kind {
-            ElementKind::Stack | ElementKind::List => create_plain_view(),
+            ElementKind::Stack | ElementKind::SafeArea | ElementKind::List => create_plain_view(),
             ElementKind::Text => {
                 let label = create_label();
                 if let Some(text) = text {
@@ -149,6 +149,7 @@ impl PlatformAdapter for IosAdapter {
             | PropKey::Spacing
             | PropKey::Padding
             | PropKey::Alignment
+            | PropKey::SafeAreaEdges
             | PropKey::Width
             | PropKey::Height
             | PropKey::MinWidth

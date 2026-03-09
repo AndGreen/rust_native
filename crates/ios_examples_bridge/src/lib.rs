@@ -2,6 +2,7 @@ use std::sync::{Mutex, OnceLock};
 
 use album_list::create_album_list_app;
 use backend_native::NativeBackend;
+use native_schema::EdgeInsets;
 use counter::create_counter_app;
 use mf_runtime::{App, HostSize};
 
@@ -23,8 +24,17 @@ fn build_app(example_id: u32, host_size: HostSize) -> Option<App<NativeBackend>>
 }
 
 #[no_mangle]
-pub extern "C" fn mf_examples_start(example_id: u32, width: f32, height: f32) -> bool {
-    let Some(app) = build_app(example_id, HostSize::new(width, height)) else {
+pub extern "C" fn mf_examples_start(
+    example_id: u32,
+    width: f32,
+    height: f32,
+    top: f32,
+    right: f32,
+    bottom: f32,
+    left: f32,
+) -> bool {
+    let host_size = HostSize::with_safe_area(width, height, EdgeInsets::new(top, right, bottom, left));
+    let Some(app) = build_app(example_id, host_size) else {
         eprintln!("[ios_examples_bridge] unknown example id: {example_id}");
         return false;
     };
@@ -49,13 +59,24 @@ pub extern "C" fn mf_examples_tick() {
 }
 
 #[no_mangle]
-pub extern "C" fn mf_examples_resize(width: f32, height: f32) {
+pub extern "C" fn mf_examples_resize(
+    width: f32,
+    height: f32,
+    top: f32,
+    right: f32,
+    bottom: f32,
+    left: f32,
+) {
     let app = {
         let slot = app_slot().lock().unwrap();
         slot.as_ref().cloned()
     };
 
     if let Some(app) = app {
-        app.set_host_size(HostSize::new(width, height));
+        app.set_host_size(HostSize::with_safe_area(
+            width,
+            height,
+            EdgeInsets::new(top, right, bottom, left),
+        ));
     }
 }

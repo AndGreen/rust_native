@@ -9,6 +9,7 @@ pub enum ProtocolVersion {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ElementKind {
     Stack,
+    SafeArea,
     Text,
     Button,
     Image,
@@ -65,6 +66,7 @@ pub enum PropKey {
     Spacing,
     Padding,
     Alignment,
+    SafeAreaEdges,
     Color,
     BackgroundColor,
     FontSize,
@@ -90,6 +92,7 @@ pub enum PropValue {
     Color(ColorValue),
     Axis(crate::Axis),
     Alignment(crate::Alignment),
+    SafeAreaEdges(crate::SafeAreaEdges),
     FontWeight(crate::FontWeight),
     Insets(crate::EdgeInsets),
     Dimension(crate::DimensionValue),
@@ -149,6 +152,7 @@ mod tests {
             PropKey::Spacing,
             PropKey::Padding,
             PropKey::Alignment,
+            PropKey::SafeAreaEdges,
             PropKey::Color,
             PropKey::BackgroundColor,
             PropKey::FontSize,
@@ -166,7 +170,7 @@ mod tests {
             PropKey::FlexShrink,
         ];
 
-        assert_eq!(keys.len(), 19);
+        assert_eq!(keys.len(), 20);
     }
 
     #[test]

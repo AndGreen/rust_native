@@ -221,6 +221,7 @@ where
             | PropKey::Spacing
             | PropKey::Padding
             | PropKey::Alignment
+            | PropKey::SafeAreaEdges
             | PropKey::Width
             | PropKey::Height
             | PropKey::MinWidth

@@ -142,10 +142,7 @@ mod tests {
     use super::VdomRuntime;
     use crate::types::{HostSize, RenderBatch};
 
-    const TEST_HOST: HostSize = HostSize {
-        width: 390.0,
-        height: 844.0,
-    };
+    const TEST_HOST: HostSize = HostSize::new(390.0, 844.0);
 
     fn render(runtime: &mut VdomRuntime, view: View) -> RenderBatch {
         runtime.render(&view, TEST_HOST)
@@ -263,5 +260,56 @@ mod tests {
         assert_eq!(batch.layout[0].x, 0.0);
         assert_eq!(batch.layout[0].y, 0.0);
         assert!(batch.layout.windows(2).all(|pair| pair[0].id != pair[1].id));
+    }
+
+    #[test]
+    fn safe_area_mount_emits_safe_area_node_and_offsets_child_layout() {
+        let mut runtime = VdomRuntime::new();
+        let host = HostSize::with_safe_area(
+            390.0,
+            844.0,
+            native_schema::EdgeInsets::new(59.0, 0.0, 34.0, 0.0),
+        );
+        let view = SafeArea().with_children(vec![Text("Albums").into_view()]);
+
+        let batch = runtime.render(&view, host);
+
+        assert!(batch.mutations.iter().any(|mutation| matches!(
+            mutation,
+            Mutation::CreateNode {
+                kind: ElementKind::SafeArea,
+                ..
+            }
+        )));
+        assert_eq!(batch.layout[1].y, 59.0);
+    }
+
+    #[test]
+    fn safe_area_keeps_child_container_full_width() {
+        let mut runtime = VdomRuntime::new();
+        let host = HostSize::with_safe_area(
+            390.0,
+            844.0,
+            native_schema::EdgeInsets::new(59.0, 0.0, 34.0, 0.0),
+        );
+        let view = SafeArea().with_children(vec![
+            VStack()
+                .spacing(12.0)
+                .padding(16.0)
+                .with_children(vec![
+                    Text("Count: 2").font(Font::bold(24.0)).into_view(),
+                    HStack()
+                        .spacing(8.0)
+                        .with_children(vec![Button("-").into_view(), Button("+").into_view()])
+                        .into_view(),
+                ])
+                .into_view(),
+        ]);
+
+        let batch = runtime.render(&view, host);
+
+        assert_eq!(batch.layout[1].x, 0.0);
+        assert_eq!(batch.layout[1].y, 59.0);
+        assert_eq!(batch.layout[1].width, 390.0);
     }
 }

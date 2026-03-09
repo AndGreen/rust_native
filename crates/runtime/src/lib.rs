@@ -316,9 +316,9 @@ mod tests {
     use super::*;
     use backend_api::Backend;
     use mf_core::view::WidgetElement;
-    use mf_core::IntoView;
+    use mf_core::{IntoView, WithChildren};
     use mf_core::View;
-    use mf_widgets::{Button, Text};
+    use mf_widgets::{Button, SafeArea, Text};
 
     #[derive(Default, Clone)]
     struct Counts {
@@ -538,5 +538,28 @@ mod tests {
         assert_eq!(snapshot.flushes, 2);
         assert_eq!(snapshot.last_mutation_count, 0);
         assert_eq!(snapshot.last_layout_count, 1);
+    }
+
+    #[test]
+    fn safe_area_change_triggers_layout_refresh() {
+        let (backend, counts) = TestBackend::new();
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || {
+            SafeArea().with_children(vec![node("Root").into_view()])
+        });
+
+        app.repaint();
+        app.set_host_size(HostSize::with_safe_area(
+            390.0,
+            844.0,
+            native_schema::EdgeInsets::new(59.0, 0.0, 34.0, 0.0),
+        ));
+        app.tick();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 2);
+        assert_eq!(snapshot.apply_layout, 2);
+        assert_eq!(snapshot.flushes, 2);
+        assert_eq!(snapshot.last_mutation_count, 0);
+        assert_eq!(snapshot.last_layout_count, 2);
     }
 }

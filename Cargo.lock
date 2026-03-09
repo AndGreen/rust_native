@@ -75,6 +75,7 @@ dependencies = [
  "backend_native",
  "counter",
  "mf_runtime",
+ "native_schema",
 ]
 
 [[package]]
@@ -124,6 +125,7 @@ name = "mf_widgets"
 version = "0.1.0"
 dependencies = [
  "mf_core",
+ "native_schema",
 ]
 
 [[package]]

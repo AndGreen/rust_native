@@ -1,4 +1,4 @@
-use native_schema::{LayoutFrame, Mutation, ProtocolVersion};
+use native_schema::{EdgeInsets, LayoutFrame, Mutation, ProtocolVersion};
 
 const DEFAULT_HOST_WIDTH: f32 = 390.0;
 const DEFAULT_HOST_HEIGHT: f32 = 844.0;
@@ -7,11 +7,24 @@ const DEFAULT_HOST_HEIGHT: f32 = 844.0;
 pub struct HostSize {
     pub width: f32,
     pub height: f32,
+    pub safe_area: EdgeInsets,
 }
 
 impl HostSize {
     pub const fn new(width: f32, height: f32) -> Self {
-        Self { width, height }
+        Self {
+            width,
+            height,
+            safe_area: EdgeInsets::all(0.0),
+        }
+    }
+
+    pub const fn with_safe_area(width: f32, height: f32, safe_area: EdgeInsets) -> Self {
+        Self {
+            width,
+            height,
+            safe_area,
+        }
     }
 }
 

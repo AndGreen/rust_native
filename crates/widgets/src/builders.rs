@@ -3,6 +3,7 @@ use crate::button::ButtonView;
 use crate::image::ImageView;
 use crate::layout::{HStack, VStack};
 use crate::list::ListView;
+use crate::safe_area::SafeArea;
 use crate::text::TextView;
 use mf_core::View;
 
@@ -24,6 +25,10 @@ pub fn HStack() -> HStack {
 
 pub fn Image(source: impl Into<String>) -> ImageView {
     ImageView::new(source)
+}
+
+pub fn SafeArea() -> SafeArea {
+    SafeArea::new()
 }
 
 pub fn List<I, F, Item>(items: I, builder: F) -> ListView

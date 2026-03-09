@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
-use native_schema::{Alignment, Axis, EdgeInsets, ElementKind, LayoutFrame, PropKey, PropValue};
+use native_schema::{
+    Alignment, Axis, EdgeInsets, ElementKind, LayoutFrame, PropKey, PropValue, SafeAreaEdges,
+};
 use taffy::prelude::*;
 
 use crate::tree::{dimension_points, float_prop, prop_value, CanonicalNode, NodeDescriptor};
@@ -20,6 +22,7 @@ struct LayoutProps {
     spacing: f32,
     padding: EdgeInsets,
     alignment: Alignment,
+    safe_area_edges: Option<SafeAreaEdges>,
     width: Option<f32>,
     height: Option<f32>,
     min_width: Option<f32>,
@@ -38,6 +41,7 @@ impl LayoutProps {
                 spacing: 0.0,
                 padding: EdgeInsets::all(0.0),
                 alignment: Alignment::Leading,
+                safe_area_edges: None,
                 width: None,
                 height: None,
                 min_width: None,
@@ -52,6 +56,7 @@ impl LayoutProps {
                 spacing: 0.0,
                 padding: EdgeInsets::all(0.0),
                 alignment: Alignment::Leading,
+                safe_area_edges: None,
                 width: None,
                 height: None,
                 min_width: None,
@@ -74,6 +79,9 @@ impl LayoutProps {
         }
         if let Some(PropValue::Alignment(alignment)) = prop_value(node, PropKey::Alignment) {
             props.alignment = *alignment;
+        }
+        if let Some(PropValue::SafeAreaEdges(edges)) = prop_value(node, PropKey::SafeAreaEdges) {
+            props.safe_area_edges = Some(*edges);
         }
 
         props.width = dimension_points(node, PropKey::Width);
@@ -141,13 +149,25 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
         };
     }
 
-    style.padding = Rect {
-        left: points(props.padding.left),
-        right: points(props.padding.right),
-        top: points(props.padding.top),
-        bottom: points(props.padding.bottom),
+    let resolved_padding = if matches!(node.descriptor, NodeDescriptor::Element(ElementKind::SafeArea))
+    {
+        props
+            .safe_area_edges
+            .unwrap_or(SafeAreaEdges::TopBottom)
+            .apply_to(host_size.safe_area)
+    } else {
+        props.padding
     };
-    style.align_items = Some(map_alignment(props.alignment));
+
+    style.padding = Rect {
+        left: points(resolved_padding.left),
+        right: points(resolved_padding.right),
+        top: points(resolved_padding.top),
+        bottom: points(resolved_padding.bottom),
+    };
+    if !matches!(node.descriptor, NodeDescriptor::Element(ElementKind::SafeArea)) {
+        style.align_items = Some(map_alignment(props.alignment));
+    }
 
     if let Some(value) = props.width {
         style.size.width = points(value);
@@ -176,6 +196,7 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
 
     match node.descriptor {
         NodeDescriptor::Element(ElementKind::Stack)
+        | NodeDescriptor::Element(ElementKind::SafeArea)
         | NodeDescriptor::Element(ElementKind::List) => {
             style.flex_direction = match props.axis {
                 Axis::Horizontal => FlexDirection::Row,
