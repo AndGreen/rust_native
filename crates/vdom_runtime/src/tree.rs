@@ -50,7 +50,7 @@ pub(crate) fn is_fragment(view: &View) -> bool {
     view.element().as_any().is::<Fragment>()
 }
 
-pub(crate) fn flatten_children<'a>(children: &'a [View]) -> Vec<&'a View> {
+pub(crate) fn flatten_children(children: &[View]) -> Vec<&View> {
     let mut flat = Vec::new();
     for child in children {
         if is_fragment(child) {
