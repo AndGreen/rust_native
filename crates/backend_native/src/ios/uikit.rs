@@ -56,8 +56,12 @@ pub(super) fn create_label() -> *mut Object {
 }
 
 pub(super) fn create_button() -> *mut Object {
+    const UI_BUTTON_TYPE_SYSTEM: usize = 1;
+
     unsafe {
-        let button: *mut Object = msg_send![class!(UIButton), buttonWithType: 0usize];
+        // System buttons keep the default UIKit title rendering and contrast on iOS.
+        let button: *mut Object =
+            msg_send![class!(UIButton), buttonWithType: UI_BUTTON_TYPE_SYSTEM];
         retain_object(button)
     }
 }
