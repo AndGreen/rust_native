@@ -1,1 +1,8 @@
 /target
+/ios/Build/
+/ios/Index.noindex/
+/ios/Logs/
+/ios/ModuleCache.noindex/
+/ios/SDKStatCaches.noindex/
+**/xcuserdata/
+*.xcuserstate

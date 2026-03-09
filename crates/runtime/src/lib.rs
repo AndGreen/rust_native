@@ -30,6 +30,7 @@ where
     builder: Arc<dyn Fn() -> View + Send + Sync>,
     vdom: Mutex<VdomRuntime>,
     subscriptions: Mutex<Vec<mf_core::signal::SignalSubscription>>,
+    dirty: AtomicBool,
 }
 
 impl<B> App<B>
@@ -54,11 +55,29 @@ where
                 builder: Arc::new(builder),
                 vdom: Mutex::new(VdomRuntime::new()),
                 subscriptions: Mutex::new(Vec::new()),
+                dirty: AtomicBool::new(true),
             }),
         }
     }
 
     pub fn repaint(&self) {
+        self.request_repaint();
+        self.tick();
+    }
+
+    pub fn request_repaint(&self) {
+        self.inner.dirty.store(true, Ordering::Relaxed);
+    }
+
+    pub fn tick(&self) {
+        if self.inner.dirty.swap(false, Ordering::Relaxed) {
+            self.render();
+        } else {
+            self.drain_events();
+        }
+    }
+
+    fn render(&self) {
         let (next, reads) = collect_reads(|| (self.inner.builder)());
         // Re-subscribe to signals read during render.
         let mut subscriptions = self.inner.subscriptions.lock().unwrap();
@@ -68,7 +87,7 @@ where
             if seen.insert(handle.id()) {
                 let app = self.clone();
                 let callback: Arc<dyn Fn() + Send + Sync> = Arc::new(move || {
-                    app.repaint();
+                    app.request_repaint();
                 });
                 let sub = handle.subscribe_callback(callback);
                 subscriptions.push(sub);
@@ -85,34 +104,61 @@ where
                 .and_then(|_| backend.apply_layout(&batch.layout))
                 .and_then(|_| backend.flush());
 
-            if let Err(BackendError::BatchRejected(_)) = result {
-                vdom.request_full_resync();
-                let retry = vdom.render(&next, self.inner.host_size);
-                backend
-                    .apply_mutations(&retry.mutations)
-                    .and_then(|_| backend.apply_layout(&retry.layout))
-                    .and_then(|_| backend.flush())
-                    .unwrap();
+            match result {
+                Ok(()) => {}
+                Err(BackendError::BatchRejected(_)) => {
+                    vdom.request_full_resync();
+                    let retry = vdom.render(&next, self.inner.host_size);
+                    match backend
+                        .apply_mutations(&retry.mutations)
+                        .and_then(|_| backend.apply_layout(&retry.layout))
+                        .and_then(|_| backend.flush())
+                    {
+                        Ok(()) => {}
+                        Err(BackendError::BatchRejected(_)) => {
+                            self.request_repaint();
+                            return;
+                        }
+                    }
+                }
             }
         }
 
-        for event in backend.drain_events() {
+        drop(backend);
+        drop(vdom);
+        self.drain_events();
+    }
+
+    fn drain_events(&self) {
+        let mut backend = self.inner.backend.lock().unwrap();
+        let events = backend.drain_events();
+        drop(backend);
+        if events.is_empty() {
+            return;
+        }
+        let vdom = self.inner.vdom.lock().unwrap();
+        for event in events {
             dispatch_event(&vdom, event);
         }
     }
 
     /// Convenience helper: repaint immediately, then block for `duration` to allow async tasks/intervals.
     pub fn run_for(&self, duration: Duration) {
-        self.repaint();
-        thread::sleep(duration);
+        let started = std::time::Instant::now();
+        self.request_repaint();
+        while started.elapsed() < duration {
+            self.tick();
+            thread::sleep(Duration::from_millis(16));
+        }
     }
 
     /// Long-running loop that keeps repainting when any watched signal changes.
     /// Intended for demo/headless mode; exits only on Ctrl+C/termination.
     pub fn run(&self) {
-        self.repaint();
+        self.request_repaint();
         loop {
-            thread::sleep(Duration::from_secs(1));
+            self.tick();
+            thread::sleep(Duration::from_millis(16));
         }
     }
 }
@@ -405,6 +451,7 @@ mod tests {
 
         app.repaint();
         set_state.set(true);
+        app.tick();
 
         let snapshot = counts.lock().unwrap().clone();
         assert_eq!(snapshot.apply_mutations, 2);
@@ -440,5 +487,30 @@ mod tests {
 
         app.repaint();
         assert_eq!(value.get(), 1);
+    }
+
+    #[test]
+    fn signal_change_marks_app_dirty_until_host_ticks() {
+        let (backend, counts) = TestBackend::new();
+        let (state, set_state) = create_signal(false);
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), move || {
+            if state.get() {
+                Text("Dirty").into_view()
+            } else {
+                Text("Clean").into_view()
+            }
+        });
+
+        app.repaint();
+        let worker = thread::spawn(move || set_state.set(true));
+        worker.join().unwrap();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 1);
+
+        app.tick();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 2);
     }
 }
