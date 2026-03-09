@@ -15,6 +15,8 @@ targets:
           - Info.plist
     info:
       path: ExamplesHost/Info.plist
+      properties:
+        UILaunchStoryboardName: LaunchScreen
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.andreyzelenin.ExamplesHost

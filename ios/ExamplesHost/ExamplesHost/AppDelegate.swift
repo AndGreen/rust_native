@@ -22,6 +22,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
 private final class RustExampleDriver {
     private var displayLink: CADisplayLink?
+    private var lastBounds: CGRect = .zero
 
     func start() {
         guard displayLink == nil else {
@@ -33,6 +34,11 @@ private final class RustExampleDriver {
     }
 
     @objc private func onFrame() {
+        let bounds = UIScreen.main.bounds
+        if bounds != lastBounds {
+            lastBounds = bounds
+            mf_examples_resize(Float(bounds.width), Float(bounds.height))
+        }
         mf_examples_tick()
     }
 }

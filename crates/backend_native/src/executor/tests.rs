@@ -198,16 +198,10 @@ fn invalid_parent_and_root_removal_are_rejected() {
             index: 0,
         }],
     );
-    assert!(matches!(
-        insert_result,
-        Err(BackendError::BatchRejected(_))
-    ));
+    assert!(matches!(insert_result, Err(BackendError::BatchRejected(_))));
 
     let remove_result = state.apply_mutations(&mut adapter, &[Mutation::RemoveNode { id: 1 }]);
-    assert!(matches!(
-        remove_result,
-        Err(BackendError::BatchRejected(_))
-    ));
+    assert!(matches!(remove_result, Err(BackendError::BatchRejected(_))));
 }
 
 #[test]
@@ -277,7 +271,10 @@ fn layout_requires_known_nodes_and_events_drain_through_adapter() {
         .unwrap();
     state.flush(&mut adapter).unwrap();
 
-    assert_eq!(state.drain_events(&mut adapter), vec![UiEvent::Tap { id: 2 }]);
+    assert_eq!(
+        state.drain_events(&mut adapter),
+        vec![UiEvent::Tap { id: 2 }]
+    );
 
     let layout_result = state.apply_layout(&[LayoutFrame {
         id: 99,
@@ -286,8 +283,5 @@ fn layout_requires_known_nodes_and_events_drain_through_adapter() {
         width: 10.0,
         height: 10.0,
     }]);
-    assert!(matches!(
-        layout_result,
-        Err(BackendError::BatchRejected(_))
-    ));
+    assert!(matches!(layout_result, Err(BackendError::BatchRejected(_))));
 }

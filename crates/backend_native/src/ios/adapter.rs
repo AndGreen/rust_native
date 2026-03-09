@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use backend_api::BackendError;
-use native_schema::{
-    ElementKind, EventKind, LayoutFrame, PropKey, PropValue, UiEvent, UiNodeId,
-};
+use native_schema::{ElementKind, EventKind, LayoutFrame, PropKey, PropValue, UiEvent, UiNodeId};
 use objc::runtime::Object;
 use objc::{msg_send, sel, sel_impl};
 
@@ -15,9 +13,9 @@ use super::events::{
 };
 use super::uikit::{
     add_subview, apply_background_color, apply_color, apply_corner_radius, apply_enabled,
-    apply_font, apply_image_source, bootstrap_host, create_button, create_image_view,
-    create_label, create_plain_view, create_text_field, insert_subview, remove_from_superview,
-    release_object, set_text_on_view, HostViews, CGRect,
+    apply_font, apply_image_source, bootstrap_host, create_button, create_image_view, create_label,
+    create_plain_view, create_text_field, insert_subview, release_object, remove_from_superview,
+    set_text_on_view, CGRect, HostViews,
 };
 
 #[derive(Default)]
@@ -64,11 +62,7 @@ impl PlatformAdapter for IosAdapter {
         Ok(view)
     }
 
-    fn attach_root(
-        &mut self,
-        node_id: UiNodeId,
-        handle: Self::Handle,
-    ) -> Result<(), BackendError> {
+    fn attach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError> {
         let host = self.ensure_host()?;
         add_subview(host.host_view, handle);
         emit_appear_if_needed(node_id, handle);

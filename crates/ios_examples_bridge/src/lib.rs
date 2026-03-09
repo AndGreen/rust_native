@@ -47,3 +47,15 @@ pub extern "C" fn mf_examples_tick() {
         app.tick();
     }
 }
+
+#[no_mangle]
+pub extern "C" fn mf_examples_resize(width: f32, height: f32) {
+    let app = {
+        let slot = app_slot().lock().unwrap();
+        slot.as_ref().cloned()
+    };
+
+    if let Some(app) = app {
+        app.set_host_size(HostSize::new(width, height));
+    }
+}

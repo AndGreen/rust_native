@@ -100,13 +100,7 @@ impl AndroidBridge for AndroidJniBridge {
         color: ColorValue,
     ) -> Result<(), BackendError> {
         unsafe {
-            rust_native_android_set_background_color(
-                handle,
-                color.r,
-                color.g,
-                color.b,
-                color.a,
-            )
+            rust_native_android_set_background_color(handle, color.r, color.g, color.b, color.a)
         };
         Ok(())
     }
@@ -118,7 +112,14 @@ impl AndroidBridge for AndroidJniBridge {
         size: f32,
         weight: FontWeight,
     ) -> Result<(), BackendError> {
-        unsafe { rust_native_android_set_font(element_kind_code(kind), handle, size, font_weight_code(weight)) };
+        unsafe {
+            rust_native_android_set_font(
+                element_kind_code(kind),
+                handle,
+                size,
+                font_weight_code(weight),
+            )
+        };
         Ok(())
     }
 
@@ -139,13 +140,19 @@ impl AndroidBridge for AndroidJniBridge {
     }
 
     fn bind_tap(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError> {
-        unsafe { rust_native_android_bind_listener(handle, node_id, event_kind_code(EventKind::Tap)) };
+        unsafe {
+            rust_native_android_bind_listener(handle, node_id, event_kind_code(EventKind::Tap))
+        };
         Ok(())
     }
 
     fn bind_text_input(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError> {
         unsafe {
-            rust_native_android_bind_listener(handle, node_id, event_kind_code(EventKind::TextInput))
+            rust_native_android_bind_listener(
+                handle,
+                node_id,
+                event_kind_code(EventKind::TextInput),
+            )
         };
         Ok(())
     }
@@ -214,14 +221,7 @@ unsafe extern "C" {
     fn rust_native_android_remove_child(parent: usize, child: usize);
     fn rust_native_android_remove_view(node_id: UiNodeId, handle: usize);
     fn rust_native_android_set_text(kind: u32, handle: usize, text_ptr: *const u8, text_len: usize);
-    fn rust_native_android_set_color(
-        kind: u32,
-        handle: usize,
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    );
+    fn rust_native_android_set_color(kind: u32, handle: usize, r: f32, g: f32, b: f32, a: f32);
     fn rust_native_android_set_background_color(handle: usize, r: f32, g: f32, b: f32, a: f32);
     fn rust_native_android_set_font(kind: u32, handle: usize, size: f32, weight: u32);
     fn rust_native_android_set_corner_radius(handle: usize, radius: f32);
@@ -238,7 +238,11 @@ unsafe fn rust_native_android_is_ui_thread() -> bool {
 }
 
 #[cfg(not(target_os = "android"))]
-unsafe fn rust_native_android_create_view(_kind: u32, _text_ptr: *const u8, _text_len: usize) -> usize {
+unsafe fn rust_native_android_create_view(
+    _kind: u32,
+    _text_ptr: *const u8,
+    _text_len: usize,
+) -> usize {
     1
 }
 

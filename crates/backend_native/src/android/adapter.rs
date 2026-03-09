@@ -16,11 +16,8 @@ use super::events::{
 
 pub(super) trait AndroidBridge {
     fn is_ui_thread(&self) -> bool;
-    fn create_view(
-        &mut self,
-        kind: ElementKind,
-        text: Option<&str>,
-    ) -> Result<usize, BackendError>;
+    fn create_view(&mut self, kind: ElementKind, text: Option<&str>)
+        -> Result<usize, BackendError>;
     fn attach_root(&mut self, node_id: UiNodeId, handle: usize) -> Result<(), BackendError>;
     fn detach_root(&mut self, node_id: UiNodeId, handle: usize) -> Result<(), BackendError>;
     fn insert_child(
@@ -106,21 +103,13 @@ where
         self.bridge.create_view(kind, text)
     }
 
-    fn attach_root(
-        &mut self,
-        node_id: UiNodeId,
-        handle: Self::Handle,
-    ) -> Result<(), BackendError> {
+    fn attach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError> {
         self.bridge.attach_root(node_id, handle)?;
         emit_appear_if_needed(node_id, handle);
         Ok(())
     }
 
-    fn detach_root(
-        &mut self,
-        node_id: UiNodeId,
-        handle: Self::Handle,
-    ) -> Result<(), BackendError> {
+    fn detach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError> {
         self.bridge.detach_root(node_id, handle)
     }
 
@@ -471,17 +460,14 @@ mod tests {
             PropValue::Color(ColorValue::new(0.1, 0.2, 0.3, 0.8)),
         );
         props.insert(PropKey::FontSize, PropValue::Float(18.0));
-        props.insert(
-            PropKey::FontWeight,
-            PropValue::FontWeight(FontWeight::Bold),
-        );
+        props.insert(PropKey::FontWeight, PropValue::FontWeight(FontWeight::Bold));
         props.insert(PropKey::CornerRadius, PropValue::Float(12.0));
         props.insert(PropKey::Enabled, PropValue::Bool(false));
+        props.insert(PropKey::Source, PropValue::String("cover.png".to_string()));
         props.insert(
-            PropKey::Source,
-            PropValue::String("cover.png".to_string()),
+            PropKey::Padding,
+            PropValue::Insets(native_schema::EdgeInsets::all(8.0)),
         );
-        props.insert(PropKey::Padding, PropValue::Insets(native_schema::EdgeInsets::all(8.0)));
 
         adapter
             .set_prop(ElementKind::Button, 7, &props, PropKey::Color)
@@ -549,9 +535,7 @@ mod tests {
             .attach_listener(ElementKind::Button, 9, 21, EventKind::Appear)
             .unwrap();
         adapter.attach_root(21, 9).unwrap();
-        adapter
-            .remove_view(21, 9, &[EventKind::Disappear])
-            .unwrap();
+        adapter.remove_view(21, 9, &[EventKind::Disappear]).unwrap();
 
         assert_eq!(
             adapter.drain_events(),

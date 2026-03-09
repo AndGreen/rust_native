@@ -26,7 +26,7 @@ where
     B: Backend + Send + 'static,
 {
     backend: Mutex<B>,
-    host_size: HostSize,
+    host_size: Mutex<HostSize>,
     builder: Arc<dyn Fn() -> View + Send + Sync>,
     vdom: Mutex<VdomRuntime>,
     subscriptions: Mutex<Vec<mf_core::signal::SignalSubscription>>,
@@ -51,7 +51,7 @@ where
         Self {
             inner: Arc::new(AppInner {
                 backend: Mutex::new(backend),
-                host_size,
+                host_size: Mutex::new(host_size),
                 builder: Arc::new(builder),
                 vdom: Mutex::new(VdomRuntime::new()),
                 subscriptions: Mutex::new(Vec::new()),
@@ -67,6 +67,14 @@ where
 
     pub fn request_repaint(&self) {
         self.inner.dirty.store(true, Ordering::Relaxed);
+    }
+
+    pub fn set_host_size(&self, host_size: HostSize) {
+        let mut current = self.inner.host_size.lock().unwrap();
+        if *current != host_size {
+            *current = host_size;
+            self.request_repaint();
+        }
     }
 
     pub fn tick(&self) {
@@ -94,8 +102,9 @@ where
             }
         }
 
+        let host_size = *self.inner.host_size.lock().unwrap();
         let mut vdom = self.inner.vdom.lock().unwrap();
-        let batch = vdom.render(&next, self.inner.host_size);
+        let batch = vdom.render(&next, host_size);
         let mut backend = self.inner.backend.lock().unwrap();
 
         if !batch.mutations.is_empty() || !batch.layout.is_empty() {
@@ -108,7 +117,7 @@ where
                 Ok(()) => {}
                 Err(BackendError::BatchRejected(_)) => {
                     vdom.request_full_resync();
-                    let retry = vdom.render(&next, self.inner.host_size);
+                    let retry = vdom.render(&next, host_size);
                     match backend
                         .apply_mutations(&retry.mutations)
                         .and_then(|_| backend.apply_layout(&retry.layout))
@@ -512,5 +521,22 @@ mod tests {
 
         let snapshot = counts.lock().unwrap().clone();
         assert_eq!(snapshot.apply_mutations, 2);
+    }
+
+    #[test]
+    fn host_resize_triggers_layout_refresh() {
+        let (backend, counts) = TestBackend::new();
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || node("Root"));
+
+        app.repaint();
+        app.set_host_size(HostSize::new(844.0, 390.0));
+        app.tick();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 2);
+        assert_eq!(snapshot.apply_layout, 2);
+        assert_eq!(snapshot.flushes, 2);
+        assert_eq!(snapshot.last_mutation_count, 0);
+        assert_eq!(snapshot.last_layout_count, 1);
     }
 }

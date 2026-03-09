@@ -96,9 +96,16 @@ fn event_target_class() -> &'static Class {
 }
 
 extern "C" fn handle_tap(_this: &Object, _cmd: Sel, sender: *mut Object) {
-    if let Some(binding) = binding_store().lock().unwrap().get(&(sender as usize)).copied() {
+    if let Some(binding) = binding_store()
+        .lock()
+        .unwrap()
+        .get(&(sender as usize))
+        .copied()
+    {
         if binding.tap {
-            queue_event(UiEvent::Tap { id: binding.node_id });
+            queue_event(UiEvent::Tap {
+                id: binding.node_id,
+            });
         }
     }
 }

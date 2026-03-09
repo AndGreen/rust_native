@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01F2EEC89F4CF926D446618D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */; };
 		19F7C8719535055000DC9DCC /* SelectedExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */; };
 		6969BD2A35F13F413008A03C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E90DE64F06D03292BD3A483E /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -14,6 +15,7 @@
 /* Begin PBXFileReference section */
 		03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedExample.swift; sourceTree = "<group>"; };
 		0F42067157EB071F3B1DAE70 /* ExamplesBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExamplesBridge.h; sourceTree = "<group>"; };
+		49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E459427E704F58C666453CBE /* ExamplesHost.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ExamplesHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E90DE64F06D03292BD3A483E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -24,6 +26,7 @@
 			children = (
 				E90DE64F06D03292BD3A483E /* AppDelegate.swift */,
 				0F42067157EB071F3B1DAE70 /* ExamplesBridge.h */,
+				49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */,
 				03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */,
 			);
 			path = ExamplesHost;
@@ -54,6 +57,7 @@
 			buildPhases = (
 				0E9C52DED9CEF7FEC7F2B1D3 /* Build Rust bridge */,
 				320E9E155B9F068D0F69C0A2 /* Sources */,
+				3E8F39BD17F8909D7E00B1EF /* Resources */,
 			);
 			buildRules = (
 			);
@@ -94,6 +98,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		3E8F39BD17F8909D7E00B1EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01F2EEC89F4CF926D446618D /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		0E9C52DED9CEF7FEC7F2B1D3 /* Build Rust bridge */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -111,7 +126,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\nexport PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin\"\nCARGO_BIN=\"${HOME}/.cargo/bin/cargo\"\nif [ ! -x \"$CARGO_BIN\" ]; then\n  CARGO_BIN=\"$(command -v cargo)\"\nfi\ncd \"$SRCROOT/../..\"\n\"$CARGO_BIN\" build -p ios_examples_bridge --target aarch64-apple-ios-sim\n";
+			shellScript = "set -eu\nexport PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin\"\nCARGO_BIN=\"/Users/andreyzelenin/.cargo/bin/cargo\"\nif [ ! -x \"$CARGO_BIN\" ]; then\n  CARGO_BIN=\"$(command -v cargo)\"\nfi\ncd \"$SRCROOT/../..\"\n\"$CARGO_BIN\" build -p ios_examples_bridge --target aarch64-apple-ios-sim\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

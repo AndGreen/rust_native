@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use backend_api::BackendError;
-use native_schema::{ElementKind, EventKind, LayoutFrame, Mutation, PropKey, PropValue, UiEvent, UiNodeId};
+use native_schema::{
+    ElementKind, EventKind, LayoutFrame, Mutation, PropKey, PropValue, UiEvent, UiNodeId,
+};
 
 use super::PlatformAdapter;
 

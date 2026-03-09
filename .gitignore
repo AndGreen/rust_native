@@ -4,5 +4,6 @@
 /ios/Logs/
 /ios/ModuleCache.noindex/
 /ios/SDKStatCaches.noindex/
+/ios/DerivedData/
 **/xcuserdata/
 *.xcuserstate

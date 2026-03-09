@@ -53,7 +53,9 @@ where
         A: PlatformAdapter<Handle = H>,
     {
         if self.nodes.contains_key(&id) {
-            return Err(BackendError::BatchRejected(format!("duplicate node id {id}")));
+            return Err(BackendError::BatchRejected(format!(
+                "duplicate node id {id}"
+            )));
         }
 
         let handle = adapter.create_view(kind, text.as_deref())?;
@@ -67,12 +69,7 @@ where
         Ok(())
     }
 
-    fn set_text<A>(
-        &mut self,
-        adapter: &mut A,
-        id: UiNodeId,
-        text: &str,
-    ) -> Result<(), BackendError>
+    fn set_text<A>(&mut self, adapter: &mut A, id: UiNodeId, text: &str) -> Result<(), BackendError>
     where
         A: PlatformAdapter<Handle = H>,
     {
@@ -113,10 +110,14 @@ where
         A: PlatformAdapter<Handle = H>,
     {
         if !self.nodes.contains_key(&parent) {
-            return Err(BackendError::BatchRejected(format!("unknown parent node id {parent}")));
+            return Err(BackendError::BatchRejected(format!(
+                "unknown parent node id {parent}"
+            )));
         }
         if !self.nodes.contains_key(&child) {
-            return Err(BackendError::BatchRejected(format!("unknown child node id {child}")));
+            return Err(BackendError::BatchRejected(format!(
+                "unknown child node id {child}"
+            )));
         }
         if child == parent {
             return Err(BackendError::BatchRejected(
@@ -227,7 +228,9 @@ where
         A: PlatformAdapter<Handle = H>,
     {
         if self.nodes.contains_key(&new_id) {
-            return Err(BackendError::BatchRejected(format!("duplicate node id {new_id}")));
+            return Err(BackendError::BatchRejected(format!(
+                "duplicate node id {new_id}"
+            )));
         }
         let old_record = self
             .nodes
@@ -344,5 +347,8 @@ fn accepts_children(kind: ElementKind) -> bool {
 }
 
 fn supports_text(kind: ElementKind) -> bool {
-    matches!(kind, ElementKind::Text | ElementKind::Button | ElementKind::Input)
+    matches!(
+        kind,
+        ElementKind::Text | ElementKind::Button | ElementKind::Input
+    )
 }

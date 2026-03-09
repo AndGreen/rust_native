@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use backend_api::BackendError;
-use native_schema::{
-    ElementKind, EventKind, LayoutFrame, PropKey, PropValue, UiEvent, UiNodeId,
-};
+use native_schema::{ElementKind, EventKind, LayoutFrame, PropKey, PropValue, UiEvent, UiNodeId};
 
 pub trait PlatformAdapter {
     type Handle: Copy + Eq;
@@ -13,16 +11,8 @@ pub trait PlatformAdapter {
         kind: ElementKind,
         text: Option<&str>,
     ) -> Result<Self::Handle, BackendError>;
-    fn attach_root(
-        &mut self,
-        node_id: UiNodeId,
-        handle: Self::Handle,
-    ) -> Result<(), BackendError>;
-    fn detach_root(
-        &mut self,
-        node_id: UiNodeId,
-        handle: Self::Handle,
-    ) -> Result<(), BackendError>;
+    fn attach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError>;
+    fn detach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError>;
     fn insert_child(
         &mut self,
         parent: Self::Handle,
@@ -61,11 +51,8 @@ pub trait PlatformAdapter {
         node_id: UiNodeId,
         event: EventKind,
     ) -> Result<(), BackendError>;
-    fn apply_frame(
-        &mut self,
-        handle: Self::Handle,
-        frame: LayoutFrame,
-    ) -> Result<(), BackendError>;
+    fn apply_frame(&mut self, handle: Self::Handle, frame: LayoutFrame)
+        -> Result<(), BackendError>;
     fn flush(&mut self) -> Result<(), BackendError>;
     fn drain_events(&mut self) -> Vec<UiEvent>;
 }

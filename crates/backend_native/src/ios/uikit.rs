@@ -12,6 +12,11 @@ pub(super) struct HostViews {
     pub(super) host_view: *mut Object,
 }
 
+const UIViewAutoresizingFlexibleWidth: usize = 1 << 1;
+const UIViewAutoresizingFlexibleHeight: usize = 1 << 4;
+const FULLSCREEN_AUTOREZISING_MASK: usize =
+    UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
 pub(super) fn bootstrap_host() -> Result<HostViews, BackendError> {
     let screen: *mut Object = unsafe { msg_send![class!(UIScreen), mainScreen] };
     let bounds: CGRect = unsafe { msg_send![screen, bounds] };
@@ -25,8 +30,13 @@ pub(super) fn bootstrap_host() -> Result<HostViews, BackendError> {
     unsafe {
         let white: *mut Object = msg_send![class!(UIColor), whiteColor];
         let _: () = msg_send![host_view, setFrame: bounds];
+        let _: () = msg_send![host_view, setAutoresizingMask: FULLSCREEN_AUTOREZISING_MASK];
         let _: () = msg_send![host_view, setBackgroundColor: white];
         let _: () = msg_send![controller, setView: host_view];
+        let view: *mut Object = msg_send![controller, view];
+        let _: () = msg_send![view, setFrame: bounds];
+        let _: () = msg_send![view, setAutoresizingMask: FULLSCREEN_AUTOREZISING_MASK];
+        let _: () = msg_send![window, setFrame: bounds];
         let _: () = msg_send![window, setRootViewController: controller];
         let _: () = msg_send![window, makeKeyAndVisible];
     }
@@ -166,7 +176,10 @@ pub(super) fn apply_font(
     handle: *mut Object,
     props: &HashMap<PropKey, PropValue>,
 ) -> Result<(), BackendError> {
-    if !matches!(kind, ElementKind::Text | ElementKind::Button | ElementKind::Input) {
+    if !matches!(
+        kind,
+        ElementKind::Text | ElementKind::Button | ElementKind::Input
+    ) {
         eprintln!("[backend_native/ios] ignoring font prop for {kind:?}");
         return Ok(());
     }
