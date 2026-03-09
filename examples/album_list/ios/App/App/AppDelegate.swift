@@ -10,8 +10,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         let bounds = UIScreen.main.bounds
         let insets = UIEdgeInsets.zero
-        let started = mf_examples_start(
-            SelectedExample.current.rawValue,
+        let started = mf_app_start(
             Float(bounds.width),
             Float(bounds.height),
             Float(insets.top),
@@ -44,7 +43,7 @@ private final class RustExampleDriver {
         if metrics.bounds != lastBounds || metrics.insets != lastInsets {
             lastBounds = metrics.bounds
             lastInsets = metrics.insets
-            mf_examples_resize(
+            mf_app_resize(
                 Float(metrics.bounds.width),
                 Float(metrics.bounds.height),
                 Float(metrics.insets.top),
@@ -53,7 +52,7 @@ private final class RustExampleDriver {
                 Float(metrics.insets.left)
             )
         }
-        mf_examples_tick()
+        mf_app_tick()
     }
 
     private func currentMetrics() -> (bounds: CGRect, insets: UIEdgeInsets) {

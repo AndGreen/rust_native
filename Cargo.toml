@@ -9,7 +9,6 @@ members = [
     "crates/backend_wgpu",
     "crates/widgets",
     "crates/runtime",
-    "crates/ios_examples_bridge",
     "examples/counter",
     "examples/album_list",
 ]

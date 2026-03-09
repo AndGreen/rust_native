@@ -15,8 +15,8 @@ mf/
  │   ├─ widgets/       # Text, Button, Image, VStack, HStack, List primitives
  │   └─ runtime/       # App scheduler, signal watching, repaint loop
  └─ examples/
-     ├─ counter/       # Signal-driven counter demo
-     └─ album_list/    # List/feed demo with nested stacks
+     ├─ counter/       # Signal-driven counter demo + local iOS app host
+     └─ album_list/    # List/feed demo + local iOS app host
 ```
 
 ## Getting Started
@@ -31,6 +31,14 @@ mf/
    cargo run -p counter
    cargo run -p album_list
    ```
+4. Build the iOS static libraries for the local example hosts:
+   ```bash
+   cargo build -p counter --target aarch64-apple-ios-sim
+   cargo build -p album_list --target aarch64-apple-ios-sim
+   ```
+5. Open the per-example iOS project when needed:
+   - `examples/counter/ios/App/App.xcodeproj`
+   - `examples/album_list/ios/App/App.xcodeproj`
 
 ## Solid-like Reactive Helpers
 
@@ -46,7 +54,7 @@ mf/
 - **`mf_macros::ui!`**: Compiles SwiftUI-like syntax into pure Rust by chaining `IntoView`/`WithChildren` implementations. Supports positional and named args plus modifier chains.
 - **`mf_widgets`**: Supplies basic widgets (`Text`, `Button`, `Image`, `VStack`, `HStack`, `List`) with builder-style modifiers for fonts, colors, spacing, etc.
 - **`mf_runtime`**: Hosts the `App` type that owns a backend and rebuilds the tree whenever watched signals emit updates.
-- **Backends**: `backend_native` renders to UIKit when built for iOS (bootstraps a `UIWindow`/`UIViewController` and maps `Text`, `Button`, `Image`, `HStack`/`VStack`, `List` into native views). On non-iOS targets it stays a logging stub. To try it on device/simulator, integrate the Rust staticlib in a tiny Swift entrypoint, create `App::new(NativeBackend::default(), builder)` on the main thread, and call `repaint()`/`run()`; the backend attaches its own window. `backend_wgpu` remains a logging stub for now.
+- **Backends**: `backend_native` renders to UIKit when built for iOS (bootstraps a `UIWindow`/`UIViewController` and maps `Text`, `Button`, `Image`, `HStack`/`VStack`, `List` into native views). On non-iOS targets it stays a logging stub. Each example now ships with its own Rust `staticlib` entrypoints plus a colocated Xcode host in `examples/*/ios/App`, so simulator/device startup stays local to that example. `backend_wgpu` remains a logging stub for now.
 
 ## Roadmap Snapshot
 

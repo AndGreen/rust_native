@@ -1,3 +1,5 @@
+mod ios_bridge;
+
 use backend_native::NativeBackend;
 use mf_macros::ui;
 use mf_runtime::{App, HostSize};
@@ -34,27 +36,29 @@ pub fn create_album_list_app(host_size: HostSize) -> App<NativeBackend> {
         move || {
             let data = albums.clone();
             ui! {
-                VStack(spacing = 16.0, padding = 24.0) {
-                    Text("Albums").font(Font::bold(32.0))
-                    List(data.into_iter(), |album: Album| {
-                        let title = album.title.to_string();
-                        let artist = album.artist.to_string();
-                        let cover = album.cover.to_string();
-                        let like_title = title.clone();
-                        let like_artist = artist.clone();
-                        ui! {
-                            HStack(spacing = 12.0, padding = 8.0) {
-                                Image(cover.clone()).size(60.0, 60.0).corner_radius(8.0)
-                                VStack(alignment = Alignment::Leading) {
-                                    Text(title.clone()).font(Font::semibold(18.0))
-                                    Text(artist.clone()).foreground(Color::secondary())
+                SafeArea {
+                    VStack(spacing = 16.0, padding = 24.0,) {
+                        Text("Albums").font(Font::bold(32.0))
+                        List(data.into_iter(), |album: Album| {
+                            let title = album.title.to_string();
+                            let artist = album.artist.to_string();
+                            let cover = album.cover.to_string();
+                            let like_title = title.clone();
+                            let like_artist = artist.clone();
+                            ui! {
+                                HStack(spacing = 12.0, padding = 8.0) {
+                                    Image(cover.clone()).size(60.0, 60.0).corner_radius(8.0)
+                                    VStack(alignment = Alignment::Leading) {
+                                        Text(title.clone()).font(Font::semibold(18.0))
+                                        Text(artist.clone()).foreground(Color::secondary())
+                                    }
+                                    Button("Like").on_click(move || {
+                                        println!("❤  Liked {} by {}", like_title, like_artist);
+                                    })
                                 }
-                                Button("Like").on_click(move || {
-                                    println!("❤  Liked {} by {}", like_title, like_artist);
-                                })
                             }
-                        }
-                    })
+                        })
+                    }
                 }
             }
         }

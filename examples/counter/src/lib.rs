@@ -1,3 +1,5 @@
+mod ios_bridge;
+
 use std::time::Duration;
 
 use backend_native::NativeBackend;

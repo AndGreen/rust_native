@@ -1,4 +1,4 @@
-name: ExamplesHost
+name: App
 
 options:
   bundleIdPrefix: dev.andreyzelenin
@@ -6,30 +6,30 @@ options:
     iOS: "17.0"
 
 targets:
-  ExamplesHost:
+  App:
     type: application
     platform: iOS
     sources:
-      - path: ExamplesHost
+      - path: App
         excludes:
           - Info.plist
     info:
-      path: ExamplesHost/Info.plist
+      path: App/Info.plist
       properties:
         UILaunchStoryboardName: LaunchScreen
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.andreyzelenin.ExamplesHost
-        PRODUCT_NAME: ExamplesHost
+        PRODUCT_BUNDLE_IDENTIFIER: dev.andreyzelenin.counter
+        PRODUCT_NAME: App
         SWIFT_VERSION: 5.0
-        SWIFT_OBJC_BRIDGING_HEADER: ExamplesHost/ExamplesBridge.h
+        SWIFT_OBJC_BRIDGING_HEADER: App/ExamplesBridge.h
         EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
         LIBRARY_SEARCH_PATHS:
           - $(inherited)
-          - $(SRCROOT)/../../target/aarch64-apple-ios-sim/debug
+          - $(SRCROOT)/../../../../target/aarch64-apple-ios-sim/debug
         OTHER_LDFLAGS:
           - $(inherited)
-          - -lios_examples_bridge
+          - -lcounter
     preBuildScripts:
       - name: Build Rust bridge
         script: |
@@ -39,5 +39,5 @@ targets:
           if [ ! -x "$CARGO_BIN" ]; then
             CARGO_BIN="$(command -v cargo)"
           fi
-          cd "$SRCROOT/../.."
-          "$CARGO_BIN" build -p ios_examples_bridge --target aarch64-apple-ios-sim
+          cd "$SRCROOT/../../../.."
+          "$CARGO_BIN" build -p counter --target aarch64-apple-ios-sim

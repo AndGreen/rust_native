@@ -1,13 +1,10 @@
 use std::sync::{Mutex, OnceLock};
 
-use album_list::create_album_list_app;
 use backend_native::NativeBackend;
-use native_schema::EdgeInsets;
-use counter::create_counter_app;
 use mf_runtime::{App, HostSize};
+use native_schema::EdgeInsets;
 
-const EXAMPLE_COUNTER: u32 = 1;
-const EXAMPLE_ALBUM_LIST: u32 = 2;
+use crate::create_album_list_app;
 
 static APP: OnceLock<Mutex<Option<App<NativeBackend>>>> = OnceLock::new();
 
@@ -15,17 +12,8 @@ fn app_slot() -> &'static Mutex<Option<App<NativeBackend>>> {
     APP.get_or_init(|| Mutex::new(None))
 }
 
-fn build_app(example_id: u32, host_size: HostSize) -> Option<App<NativeBackend>> {
-    match example_id {
-        EXAMPLE_COUNTER => Some(create_counter_app(host_size)),
-        EXAMPLE_ALBUM_LIST => Some(create_album_list_app(host_size)),
-        _ => None,
-    }
-}
-
 #[no_mangle]
-pub extern "C" fn mf_examples_start(
-    example_id: u32,
+pub extern "C" fn mf_app_start(
     width: f32,
     height: f32,
     top: f32,
@@ -33,12 +21,9 @@ pub extern "C" fn mf_examples_start(
     bottom: f32,
     left: f32,
 ) -> bool {
-    let host_size = HostSize::with_safe_area(width, height, EdgeInsets::new(top, right, bottom, left));
-    let Some(app) = build_app(example_id, host_size) else {
-        eprintln!("[ios_examples_bridge] unknown example id: {example_id}");
-        return false;
-    };
-
+    let host_size =
+        HostSize::with_safe_area(width, height, EdgeInsets::new(top, right, bottom, left));
+    let app = create_album_list_app(host_size);
     app.repaint();
 
     let mut slot = app_slot().lock().unwrap();
@@ -47,7 +32,7 @@ pub extern "C" fn mf_examples_start(
 }
 
 #[no_mangle]
-pub extern "C" fn mf_examples_tick() {
+pub extern "C" fn mf_app_tick() {
     let app = {
         let slot = app_slot().lock().unwrap();
         slot.as_ref().cloned()
@@ -59,7 +44,7 @@ pub extern "C" fn mf_examples_tick() {
 }
 
 #[no_mangle]
-pub extern "C" fn mf_examples_resize(
+pub extern "C" fn mf_app_resize(
     width: f32,
     height: f32,
     top: f32,

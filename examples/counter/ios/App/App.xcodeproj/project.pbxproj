@@ -8,34 +8,31 @@
 
 /* Begin PBXBuildFile section */
 		01F2EEC89F4CF926D446618D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */; };
-		19F7C8719535055000DC9DCC /* SelectedExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */; };
 		6969BD2A35F13F413008A03C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E90DE64F06D03292BD3A483E /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedExample.swift; sourceTree = "<group>"; };
 		0F42067157EB071F3B1DAE70 /* ExamplesBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExamplesBridge.h; sourceTree = "<group>"; };
 		49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		E459427E704F58C666453CBE /* ExamplesHost.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ExamplesHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E459427E704F58C666453CBE /* App.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E90DE64F06D03292BD3A483E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		50AB1B7039793D8E41671CAA /* ExamplesHost */ = {
+		50AB1B7039793D8E41671CAA /* App */ = {
 			isa = PBXGroup;
 			children = (
 				E90DE64F06D03292BD3A483E /* AppDelegate.swift */,
 				0F42067157EB071F3B1DAE70 /* ExamplesBridge.h */,
 				49E9F46BAACB9DC170F47BEB /* LaunchScreen.storyboard */,
-				03E25D747B39B8B39EFFDA0F /* SelectedExample.swift */,
 			);
-			path = ExamplesHost;
+			path = App;
 			sourceTree = "<group>";
 		};
 		FCA14F235445D2DBF5D06795 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E459427E704F58C666453CBE /* ExamplesHost.app */,
+				E459427E704F58C666453CBE /* App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -43,7 +40,7 @@
 		FE69F2D46D6C7689A02207CE = {
 			isa = PBXGroup;
 			children = (
-				50AB1B7039793D8E41671CAA /* ExamplesHost */,
+				50AB1B7039793D8E41671CAA /* App */,
 				FCA14F235445D2DBF5D06795 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -51,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		2163CAD3B16CDC9DE9F4779E /* ExamplesHost */ = {
+		2163CAD3B16CDC9DE9F4779E /* App */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DDEED9EEA52239E4C368C28D /* Build configuration list for PBXNativeTarget "ExamplesHost" */;
+			buildConfigurationList = DDEED9EEA52239E4C368C28D /* Build configuration list for PBXNativeTarget "App" */;
 			buildPhases = (
 				0E9C52DED9CEF7FEC7F2B1D3 /* Build Rust bridge */,
 				320E9E155B9F068D0F69C0A2 /* Sources */,
@@ -63,11 +60,11 @@
 			);
 			dependencies = (
 			);
-			name = ExamplesHost;
+			name = App;
 			packageProductDependencies = (
 			);
-			productName = ExamplesHost;
-			productReference = E459427E704F58C666453CBE /* ExamplesHost.app */;
+			productName = App;
+			productReference = E459427E704F58C666453CBE /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -79,7 +76,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 			};
-			buildConfigurationList = 4711E5925E39331410ED369A /* Build configuration list for PBXProject "ExamplesHost" */;
+			buildConfigurationList = 4711E5925E39331410ED369A /* Build configuration list for PBXProject "App" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -93,7 +90,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2163CAD3B16CDC9DE9F4779E /* ExamplesHost */,
+				2163CAD3B16CDC9DE9F4779E /* App */,
 			);
 		};
 /* End PBXProject section */
@@ -126,7 +123,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\nexport PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin\"\nCARGO_BIN=\"/Users/andreyzelenin/.cargo/bin/cargo\"\nif [ ! -x \"$CARGO_BIN\" ]; then\n  CARGO_BIN=\"$(command -v cargo)\"\nfi\ncd \"$SRCROOT/../..\"\n\"$CARGO_BIN\" build -p ios_examples_bridge --target aarch64-apple-ios-sim\n";
+			shellScript = "set -eu\nexport PATH=\"$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin\"\nCARGO_BIN=\"/Users/andreyzelenin/.cargo/bin/cargo\"\nif [ ! -x \"$CARGO_BIN\" ]; then\n  CARGO_BIN=\"$(command -v cargo)\"\nfi\ncd \"$SRCROOT/../../../..\"\n\"$CARGO_BIN\" build -p counter --target aarch64-apple-ios-sim\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -136,7 +133,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				6969BD2A35F13F413008A03C /* AppDelegate.swift in Sources */,
-				19F7C8719535055000DC9DCC /* SelectedExample.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,23 +201,23 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
-				INFOPLIST_FILE = ExamplesHost/Info.plist;
+				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../../target/aarch64-apple-ios-sim/debug",
+					"$(SRCROOT)/../../../../target/aarch64-apple-ios-sim/debug",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lios_examples_bridge",
+					"-lcounter",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = dev.andreyzelenin.ExamplesHost;
-				PRODUCT_NAME = ExamplesHost;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.andreyzelenin.counter;
+				PRODUCT_NAME = App;
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = ExamplesHost/ExamplesBridge.h;
+				SWIFT_OBJC_BRIDGING_HEADER = App/ExamplesBridge.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -233,23 +229,23 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
-				INFOPLIST_FILE = ExamplesHost/Info.plist;
+				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../../target/aarch64-apple-ios-sim/debug",
+					"$(SRCROOT)/../../../../target/aarch64-apple-ios-sim/debug",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					"-lios_examples_bridge",
+					"-lcounter",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = dev.andreyzelenin.ExamplesHost;
-				PRODUCT_NAME = ExamplesHost;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.andreyzelenin.counter;
+				PRODUCT_NAME = App;
 				SDKROOT = iphoneos;
-				SWIFT_OBJC_BRIDGING_HEADER = ExamplesHost/ExamplesBridge.h;
+				SWIFT_OBJC_BRIDGING_HEADER = App/ExamplesBridge.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -321,7 +317,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4711E5925E39331410ED369A /* Build configuration list for PBXProject "ExamplesHost" */ = {
+		4711E5925E39331410ED369A /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F1F9D1F275F31C05530BFADC /* Debug */,
@@ -330,7 +326,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		DDEED9EEA52239E4C368C28D /* Build configuration list for PBXNativeTarget "ExamplesHost" */ = {
+		DDEED9EEA52239E4C368C28D /* Build configuration list for PBXNativeTarget "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E56E8322671AEB87FDDF2ED1 /* Debug */,
