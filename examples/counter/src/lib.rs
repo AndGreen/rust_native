@@ -25,15 +25,23 @@ pub fn create_counter_app(host_size: HostSize) -> App<NativeBackend> {
                         .font(Font::bold(24.0))
                         .color(Color::primary())
                     HStack(spacing = 8.0) {
-                        Button("−").on_click(move || {
-                            decrement.update(|value| *value -= 1);
-                        })
-                        Button("+").on_click(move || {
-                            batch_updates(|| {
-                                increment.update(|value| *value += 1);
-                                increment.update(|value| *value += 1);
+                        Button("−")
+                            .background(Color::new(0.82, 0.29, 0.26))
+                            .foreground(Color::new(0.98, 0.96, 0.92))
+                            .corner_radius(12.0)
+                            .on_click(move || {
+                                decrement.update(|value| *value -= 1);
+                            })
+                        Button("+")
+                            .background(Color::new(0.14, 0.55, 0.38))
+                            .foreground(Color::new(0.98, 0.96, 0.92))
+                            .corner_radius(12.0)
+                            .on_click(move || {
+                                batch_updates(|| {
+                                    increment.update(|value| *value += 1);
+                                    increment.update(|value| *value += 1);
+                                });
                             });
-                        })
                     }
                 }
             }

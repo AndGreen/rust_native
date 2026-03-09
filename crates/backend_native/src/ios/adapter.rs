@@ -14,10 +14,10 @@ use super::events::{
     update_binding,
 };
 use super::uikit::{
-    add_subview, apply_color, apply_corner_radius, apply_enabled, apply_font, apply_image_source,
-    bootstrap_host, create_button, create_image_view, create_label, create_plain_view,
-    create_text_field, insert_subview, remove_from_superview, release_object, set_text_on_view,
-    HostViews, CGRect,
+    add_subview, apply_background_color, apply_color, apply_corner_radius, apply_enabled,
+    apply_font, apply_image_source, bootstrap_host, create_button, create_image_view,
+    create_label, create_plain_view, create_text_field, insert_subview, remove_from_superview,
+    release_object, set_text_on_view, HostViews, CGRect,
 };
 
 #[derive(Default)]
@@ -138,6 +138,9 @@ impl PlatformAdapter for IosAdapter {
     ) -> Result<(), BackendError> {
         match key {
             PropKey::Color => apply_color(kind, handle, props.get(&PropKey::Color)),
+            PropKey::BackgroundColor => {
+                apply_background_color(handle, props.get(&PropKey::BackgroundColor))
+            }
             PropKey::FontSize | PropKey::FontWeight => apply_font(kind, handle, props),
             PropKey::CornerRadius => {
                 apply_corner_radius(handle, props.get(&PropKey::CornerRadius));

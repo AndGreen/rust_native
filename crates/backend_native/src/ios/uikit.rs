@@ -140,6 +140,27 @@ pub(super) fn apply_color(
     Ok(())
 }
 
+pub(super) fn apply_background_color(
+    handle: *mut Object,
+    value: Option<&PropValue>,
+) -> Result<(), BackendError> {
+    let Some(PropValue::Color(ColorValue { r, g, b, a })) = value else {
+        eprintln!("[backend_native/ios] ignoring invalid BackgroundColor prop");
+        return Ok(());
+    };
+    unsafe {
+        let color: *mut Object = msg_send![
+            class!(UIColor),
+            colorWithRed: *r as f64
+            green: *g as f64
+            blue: *b as f64
+            alpha: *a as f64
+        ];
+        let _: () = msg_send![handle, setBackgroundColor: color];
+    }
+    Ok(())
+}
+
 pub(super) fn apply_font(
     kind: ElementKind,
     handle: *mut Object,

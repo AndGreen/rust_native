@@ -94,6 +94,23 @@ impl AndroidBridge for AndroidJniBridge {
         Ok(())
     }
 
+    fn set_background_color(
+        &mut self,
+        handle: usize,
+        color: ColorValue,
+    ) -> Result<(), BackendError> {
+        unsafe {
+            rust_native_android_set_background_color(
+                handle,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
+            )
+        };
+        Ok(())
+    }
+
     fn set_font(
         &mut self,
         kind: ElementKind,
@@ -205,6 +222,7 @@ unsafe extern "C" {
         b: f32,
         a: f32,
     );
+    fn rust_native_android_set_background_color(handle: usize, r: f32, g: f32, b: f32, a: f32);
     fn rust_native_android_set_font(kind: u32, handle: usize, size: f32, weight: u32);
     fn rust_native_android_set_corner_radius(handle: usize, radius: f32);
     fn rust_native_android_set_enabled(handle: usize, enabled: bool);
@@ -257,6 +275,16 @@ unsafe fn rust_native_android_set_text(
 #[cfg(not(target_os = "android"))]
 unsafe fn rust_native_android_set_color(
     _kind: u32,
+    _handle: usize,
+    _r: f32,
+    _g: f32,
+    _b: f32,
+    _a: f32,
+) {
+}
+
+#[cfg(not(target_os = "android"))]
+unsafe fn rust_native_android_set_background_color(
     _handle: usize,
     _r: f32,
     _g: f32,

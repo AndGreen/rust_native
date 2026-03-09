@@ -53,11 +53,12 @@ pub enum Mutation {
 3. `Padding`
 4. `Alignment`
 5. `Color`
-6. `FontSize`
-7. `FontWeight`
-8. `CornerRadius`
-9. `Source`
-10. `Enabled`
+6. `BackgroundColor`
+7. `FontSize`
+8. `FontWeight`
+9. `CornerRadius`
+10. `Source`
+11. `Enabled`
 
 ## 8. Event Contract (Native -> Rust)
 ```rust
@@ -99,4 +100,3 @@ Action: reject batch and trigger reconciliation recovery.
 1. Renderer reports `BatchRejected`.
 2. Runtime schedules a full subtree re-sync for affected root.
 3. Renderer drops stale handles not present after re-sync.
-

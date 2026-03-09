@@ -82,7 +82,7 @@ pub(crate) fn canonicalize_view(
         return CanonicalNode {
             id,
             descriptor: NodeDescriptor::Element(ElementKind::Button),
-            props: button_props(),
+            props: button_props(button),
             text: Some(button.label().to_string()),
             tap_handler: button.action().map(Arc::clone),
             children,
@@ -193,8 +193,27 @@ fn text_props(text: &TextView) -> Vec<(PropKey, PropValue)> {
     props
 }
 
-fn button_props() -> Vec<(PropKey, PropValue)> {
-    Vec::new()
+fn button_props(button: &ButtonView) -> Vec<(PropKey, PropValue)> {
+    let mut props = Vec::new();
+    if let Some(color) = button.color_value() {
+        props.push((
+            PropKey::Color,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    if let Some(color) = button.background_value() {
+        props.push((
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    if let Some(radius) = button.corner_radius_value() {
+        props.push((PropKey::CornerRadius, PropValue::Float(radius)));
+    }
+    if !button.is_enabled() {
+        props.push((PropKey::Enabled, PropValue::Bool(false)));
+    }
+    props
 }
 
 fn image_props(image: &ImageView) -> Vec<(PropKey, PropValue)> {
@@ -253,4 +272,32 @@ fn list_props() -> Vec<(PropKey, PropValue)> {
         (PropKey::Padding, PropValue::Insets(EdgeInsets::all(0.0))),
         (PropKey::Alignment, PropValue::Alignment(Alignment::Leading)),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mf_widgets::{Button, Color};
+
+    #[test]
+    fn button_props_include_visual_style_and_enabled_state() {
+        let button = Button("Save")
+            .background(Color::new(0.1, 0.2, 0.3))
+            .foreground(Color::new(0.9, 0.8, 0.7).with_alpha(0.6))
+            .corner_radius(10.0)
+            .enabled(false);
+
+        let props = button_props(&button);
+
+        assert!(props.contains(&(
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(0.1, 0.2, 0.3, 1.0))
+        )));
+        assert!(props.contains(&(
+            PropKey::Color,
+            PropValue::Color(ColorValue::new(0.9, 0.8, 0.7, 0.6))
+        )));
+        assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(10.0))));
+        assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
+    }
 }

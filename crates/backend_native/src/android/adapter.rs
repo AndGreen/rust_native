@@ -49,6 +49,11 @@ pub(super) trait AndroidBridge {
         handle: usize,
         color: ColorValue,
     ) -> Result<(), BackendError>;
+    fn set_background_color(
+        &mut self,
+        handle: usize,
+        color: ColorValue,
+    ) -> Result<(), BackendError>;
     fn set_font(
         &mut self,
         kind: ElementKind,
@@ -173,6 +178,13 @@ where
                 Some(PropValue::Color(color)) => self.bridge.set_color(kind, handle, *color),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid Color prop");
+                    Ok(())
+                }
+            },
+            PropKey::BackgroundColor => match props.get(&PropKey::BackgroundColor) {
+                Some(PropValue::Color(color)) => self.bridge.set_background_color(handle, *color),
+                _ => {
+                    eprintln!("[backend_native/android] ignoring invalid BackgroundColor prop");
                     Ok(())
                 }
             },
@@ -313,6 +325,7 @@ mod tests {
         BindTap(usize, UiNodeId),
         BindTextInput(usize, UiNodeId),
         SetColor(ElementKind, usize, ColorValue),
+        SetBackgroundColor(usize, ColorValue),
         SetFont(ElementKind, usize, f32, FontWeight),
         SetCornerRadius(usize, f32),
         SetEnabled(usize, bool),
@@ -387,6 +400,15 @@ mod tests {
             Ok(())
         }
 
+        fn set_background_color(
+            &mut self,
+            handle: usize,
+            color: ColorValue,
+        ) -> Result<(), BackendError> {
+            self.ops.push(Op::SetBackgroundColor(handle, color));
+            Ok(())
+        }
+
         fn set_font(
             &mut self,
             kind: ElementKind,
@@ -444,6 +466,10 @@ mod tests {
             PropKey::Color,
             PropValue::Color(ColorValue::new(1.0, 0.5, 0.0, 1.0)),
         );
+        props.insert(
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(0.1, 0.2, 0.3, 0.8)),
+        );
         props.insert(PropKey::FontSize, PropValue::Float(18.0));
         props.insert(
             PropKey::FontWeight,
@@ -459,6 +485,9 @@ mod tests {
 
         adapter
             .set_prop(ElementKind::Button, 7, &props, PropKey::Color)
+            .unwrap();
+        adapter
+            .set_prop(ElementKind::Button, 7, &props, PropKey::BackgroundColor)
             .unwrap();
         adapter
             .set_prop(ElementKind::Button, 7, &props, PropKey::FontSize)
@@ -480,6 +509,7 @@ mod tests {
             adapter.bridge.ops,
             vec![
                 Op::SetColor(ElementKind::Button, 7, ColorValue::new(1.0, 0.5, 0.0, 1.0)),
+                Op::SetBackgroundColor(7, ColorValue::new(0.1, 0.2, 0.3, 0.8)),
                 Op::SetFont(ElementKind::Button, 7, 18.0, FontWeight::Bold),
                 Op::SetCornerRadius(7, 12.0),
                 Op::SetEnabled(7, false),

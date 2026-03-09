@@ -66,6 +66,7 @@ pub enum PropKey {
     Padding,
     Alignment,
     Color,
+    BackgroundColor,
     FontSize,
     FontWeight,
     CornerRadius,
@@ -149,6 +150,7 @@ mod tests {
             PropKey::Padding,
             PropKey::Alignment,
             PropKey::Color,
+            PropKey::BackgroundColor,
             PropKey::FontSize,
             PropKey::FontWeight,
             PropKey::CornerRadius,
@@ -164,7 +166,7 @@ mod tests {
             PropKey::FlexShrink,
         ];
 
-        assert_eq!(keys.len(), 18);
+        assert_eq!(keys.len(), 19);
     }
 
     #[test]
