@@ -59,7 +59,7 @@ pub enum EventKind {
     Disappear,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PropKey {
     Axis,
     Spacing,
