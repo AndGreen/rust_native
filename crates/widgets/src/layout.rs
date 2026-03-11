@@ -1,6 +1,8 @@
 use mf_core::dsl::WithChildren;
 use mf_core::view::{View, WidgetElement};
 
+use crate::color::Color;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Alignment {
     Leading,
@@ -13,6 +15,7 @@ pub struct VStack {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    background: Option<Color>,
 }
 
 impl Default for VStack {
@@ -27,6 +30,7 @@ impl VStack {
             spacing: 8.0,
             padding: 0.0,
             alignment: Alignment::Center,
+            background: None,
         }
     }
 
@@ -44,6 +48,11 @@ impl VStack {
         self.alignment = alignment;
         self
     }
+
+    pub fn background(mut self, color: Color) -> Self {
+        self.background = Some(color);
+        self
+    }
 }
 
 impl WithChildren for VStack {
@@ -54,6 +63,7 @@ impl WithChildren for VStack {
                 spacing: self.spacing,
                 padding: self.padding,
                 alignment: self.alignment,
+                background: self.background,
             },
             children,
         )
@@ -65,6 +75,7 @@ pub struct HStack {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    background: Option<Color>,
 }
 
 impl Default for HStack {
@@ -79,6 +90,7 @@ impl HStack {
             spacing: 8.0,
             padding: 0.0,
             alignment: Alignment::Center,
+            background: None,
         }
     }
 
@@ -96,6 +108,11 @@ impl HStack {
         self.alignment = alignment;
         self
     }
+
+    pub fn background(mut self, color: Color) -> Self {
+        self.background = Some(color);
+        self
+    }
 }
 
 impl WithChildren for HStack {
@@ -106,6 +123,7 @@ impl WithChildren for HStack {
                 spacing: self.spacing,
                 padding: self.padding,
                 alignment: self.alignment,
+                background: self.background,
             },
             children,
         )
@@ -123,6 +141,7 @@ pub struct StackElement {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    background: Option<Color>,
 }
 
 impl StackElement {
@@ -141,6 +160,10 @@ impl StackElement {
     pub fn alignment(&self) -> Alignment {
         self.alignment
     }
+
+    pub fn background_value(&self) -> Option<&Color> {
+        self.background.as_ref()
+    }
 }
 
 impl WidgetElement for StackElement {
@@ -153,15 +176,34 @@ impl WidgetElement for StackElement {
 
     fn describe(&self) -> String {
         format!(
-            "{}(spacing: {}, padding: {}, alignment: {:?})",
+            "{}(spacing: {}, padding: {}, alignment: {:?}, background: {:?})",
             self.name(),
             self.spacing,
             self.padding,
-            self.alignment
+            self.alignment,
+            self.background
         )
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vstack_background_builder_preserves_color() {
+        let color = Color::new(0.2, 0.3, 0.4).with_alpha(0.8);
+        let view = VStack::new().background(color).with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert_eq!(stack.background_value(), Some(&color));
     }
 }

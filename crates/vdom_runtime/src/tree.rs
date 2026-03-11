@@ -362,7 +362,7 @@ fn input_props(input: &InputView) -> Vec<(PropKey, PropValue)> {
 }
 
 fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
-    vec![
+    let mut props = vec![
         (
             PropKey::Axis,
             PropValue::Axis(match stack.axis() {
@@ -383,7 +383,14 @@ fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
                 WidgetAlignment::Trailing => Alignment::Trailing,
             }),
         ),
-    ]
+    ];
+    if let Some(color) = stack.background_value() {
+        props.push((
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    props
 }
 
 fn safe_area_props(safe_area: &SafeArea) -> Vec<(PropKey, PropValue)> {
@@ -409,7 +416,8 @@ fn list_props() -> Vec<(PropKey, PropValue)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mf_widgets::{Button, Color, Input};
+    use mf_core::WithChildren;
+    use mf_widgets::{Button, Color, HStack, Input};
 
     #[test]
     fn button_props_include_visual_style_and_enabled_state() {
@@ -447,5 +455,24 @@ mod tests {
         assert!(props.contains(&(PropKey::Focused, PropValue::Bool(true))));
         assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
         assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(12.0))));
+    }
+
+    #[test]
+    fn stack_props_include_background_color() {
+        let view = HStack::new()
+            .background(Color::new(0.3, 0.4, 0.5).with_alpha(0.7))
+            .with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        let props = stack_props(stack);
+
+        assert!(props.contains(&(
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7)),
+        )));
     }
 }

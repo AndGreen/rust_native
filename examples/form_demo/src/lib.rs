@@ -25,11 +25,13 @@ pub fn create_form_demo_app(host_size: HostSize) -> App<NativeBackend> {
 
             ui! {
                 SafeArea {
-                    VStack(spacing = 16.0, padding = 24.0, alignment = Alignment::Leading) {
+                    VStack(spacing = 16.0, padding = 24.0, alignment = Alignment::Leading)
+                        .background(Color::hex_or_black("#FAF6F1")) {
                         Text("Profile Form").font(Font::bold(28.0)).color(Color::primary())
                         Text("Controlled inputs with Rust-owned focus state")
                             .foreground(Color::secondary())
-                        VStack(spacing = 12.0, alignment = Alignment::Leading) {
+                        VStack(spacing = 12.0, alignment = Alignment::Leading)
+                            .background(Color::hex_or_black("#F6F0EB")) {
                             Text("Name").font(Font::semibold(16.0))
                             Input(current_name.clone())
                                 .font(Font::regular(18.0))
