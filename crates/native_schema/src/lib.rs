@@ -12,8 +12,8 @@ pub use layout::{
     DimensionValue, EdgeInsets, LayoutFrame, LayoutFrameValidationError, SafeAreaEdges,
 };
 pub use mutation::{
-    Alignment, Axis, ColorValue, ElementKind, EventKind, FontWeight, Mutation, PropKey, PropValue,
-    ProtocolVersion, UiNodeId,
+    Alignment, Axis, ColorValue, ElementKind, EventKind, FontWeight, JustifyContent, Mutation,
+    PropKey, PropValue, ProtocolVersion, UiNodeId,
 };
 
 #[cfg(test)]

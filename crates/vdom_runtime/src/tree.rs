@@ -10,8 +10,8 @@ use mf_widgets::layout::{Alignment as WidgetAlignment, Axis as WidgetAxis, Stack
 use mf_widgets::safe_area::SafeArea;
 use mf_widgets::text::TextView;
 use native_schema::{
-    Alignment, Axis, ColorValue, DimensionValue, EdgeInsets, ElementKind, FontWeight, PropKey,
-    PropValue, SafeAreaEdges, UiNodeId,
+    Alignment, Axis, ColorValue, DimensionValue, EdgeInsets, ElementKind, FontWeight,
+    JustifyContent, PropKey, PropValue, SafeAreaEdges, UiNodeId,
 };
 
 #[derive(Clone)]
@@ -384,6 +384,10 @@ fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
                 WidgetAlignment::Stretch => Alignment::Stretch,
             }),
         ),
+        (
+            PropKey::JustifyContent,
+            PropValue::JustifyContent(stack.justify_content()),
+        ),
     ];
     if let Some(color) = stack.background_value() {
         props.push((
@@ -395,14 +399,41 @@ fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
 }
 
 fn safe_area_props(safe_area: &SafeArea) -> Vec<(PropKey, PropValue)> {
-    vec![(
-        PropKey::SafeAreaEdges,
-        PropValue::SafeAreaEdges(match safe_area.edges_value() {
-            SafeAreaEdges::Top => SafeAreaEdges::Top,
-            SafeAreaEdges::TopBottom => SafeAreaEdges::TopBottom,
-            SafeAreaEdges::All => SafeAreaEdges::All,
-        }),
-    )]
+    let mut props = vec![
+        (
+            PropKey::SafeAreaEdges,
+            PropValue::SafeAreaEdges(match safe_area.edges_value() {
+                SafeAreaEdges::Top => SafeAreaEdges::Top,
+                SafeAreaEdges::TopBottom => SafeAreaEdges::TopBottom,
+                SafeAreaEdges::All => SafeAreaEdges::All,
+            }),
+        ),
+        (
+            PropKey::Alignment,
+            PropValue::Alignment(match safe_area.alignment_value() {
+                WidgetAlignment::Leading => Alignment::Leading,
+                WidgetAlignment::Center => Alignment::Center,
+                WidgetAlignment::Trailing => Alignment::Trailing,
+                WidgetAlignment::Stretch => Alignment::Stretch,
+            }),
+        ),
+        (
+            PropKey::JustifyContent,
+            PropValue::JustifyContent(match safe_area.justify_content_value() {
+                JustifyContent::Start => JustifyContent::Start,
+                JustifyContent::Center => JustifyContent::Center,
+                JustifyContent::End => JustifyContent::End,
+                JustifyContent::Stretch => JustifyContent::Stretch,
+            }),
+        ),
+    ];
+    if let Some(color) = safe_area.background_value() {
+        props.push((
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    props
 }
 
 fn list_props() -> Vec<(PropKey, PropValue)> {
@@ -418,7 +449,7 @@ fn list_props() -> Vec<(PropKey, PropValue)> {
 mod tests {
     use super::*;
     use mf_core::WithChildren;
-    use mf_widgets::{Button, Color, HStack, Input, VStack};
+    use mf_widgets::{Button, Color, HStack, Input, JustifyContent, SafeArea, VStack};
 
     #[test]
     fn button_props_include_visual_style_and_enabled_state() {
@@ -491,6 +522,48 @@ mod tests {
         assert!(props.contains(&(
             PropKey::Alignment,
             PropValue::Alignment(Alignment::Stretch),
+        )));
+    }
+
+    #[test]
+    fn stack_props_include_justify_content() {
+        let view = VStack::new()
+            .justify_content(JustifyContent::Center)
+            .with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        let props = stack_props(stack);
+
+        assert!(props.contains(&(
+            PropKey::JustifyContent,
+            PropValue::JustifyContent(JustifyContent::Center),
+        )));
+    }
+
+    #[test]
+    fn safe_area_props_include_layout_and_background_values() {
+        let safe_area = SafeArea::new()
+            .alignment(mf_widgets::Alignment::Center)
+            .justify_content(JustifyContent::Center)
+            .background(Color::new(0.3, 0.4, 0.5).with_alpha(0.7));
+
+        let props = safe_area_props(&safe_area);
+
+        assert!(props.contains(&(
+            PropKey::Alignment,
+            PropValue::Alignment(Alignment::Center),
+        )));
+        assert!(props.contains(&(
+            PropKey::JustifyContent,
+            PropValue::JustifyContent(JustifyContent::Center),
+        )));
+        assert!(props.contains(&(
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7)),
         )));
     }
 }

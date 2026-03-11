@@ -34,6 +34,14 @@ pub enum Alignment {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum JustifyContent {
+    Start,
+    Center,
+    End,
+    Stretch,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FontWeight {
     Regular,
     SemiBold,
@@ -70,6 +78,7 @@ pub enum PropKey {
     Spacing,
     Padding,
     Alignment,
+    JustifyContent,
     SafeAreaEdges,
     Color,
     BackgroundColor,
@@ -97,6 +106,7 @@ pub enum PropValue {
     Color(ColorValue),
     Axis(crate::Axis),
     Alignment(crate::Alignment),
+    JustifyContent(crate::JustifyContent),
     SafeAreaEdges(crate::SafeAreaEdges),
     FontWeight(crate::FontWeight),
     Insets(crate::EdgeInsets),
@@ -157,6 +167,7 @@ mod tests {
             PropKey::Spacing,
             PropKey::Padding,
             PropKey::Alignment,
+            PropKey::JustifyContent,
             PropKey::SafeAreaEdges,
             PropKey::Color,
             PropKey::BackgroundColor,
@@ -176,7 +187,7 @@ mod tests {
             PropKey::FlexShrink,
         ];
 
-        assert_eq!(keys.len(), 21);
+        assert_eq!(keys.len(), 22);
     }
 
     #[test]

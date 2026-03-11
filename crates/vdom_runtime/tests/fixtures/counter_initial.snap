@@ -3,11 +3,15 @@ protocol: V1
 mutations:
   CreateNode id=1 kind=SafeArea
   SetProp id=1 key=SafeAreaEdges value=SafeAreaEdges(TopBottom)
+  SetProp id=1 key=Alignment value=Alignment(Center)
+  SetProp id=1 key=JustifyContent value=JustifyContent(Center)
+  SetProp id=1 key=BackgroundColor value=Color(r=1.0, g=1.0, b=0.9, a=1.0)
   CreateNode id=2 kind=Stack
   SetProp id=2 key=Axis value=Axis(Vertical)
   SetProp id=2 key=Spacing value=12.0
   SetProp id=2 key=Padding value=Insets(top=16.0, right=16.0, bottom=16.0, left=16.0)
-  SetProp id=2 key=Alignment value=Alignment(Stretch)
+  SetProp id=2 key=Alignment value=Alignment(Center)
+  SetProp id=2 key=JustifyContent value=JustifyContent(Start)
   CreateTextNode id=3 text="Count: 0"
   SetProp id=3 key=Color value=Color(r=0.1, g=0.1, b=0.1, a=1.0)
   SetProp id=3 key=FontSize value=24.0
@@ -18,6 +22,7 @@ mutations:
   SetProp id=4 key=Spacing value=8.0
   SetProp id=4 key=Padding value=Insets(top=0.0, right=0.0, bottom=0.0, left=0.0)
   SetProp id=4 key=Alignment value=Alignment(Center)
+  SetProp id=4 key=JustifyContent value=JustifyContent(Start)
   CreateNode id=5 kind=Button
   SetText id=5 text="−"
   SetProp id=5 key=Color value=Color(r=1.0, g=0.9, b=0.9, a=1.0)
@@ -36,8 +41,8 @@ mutations:
   InsertChild parent=1 child=2 index=0
 layout:
   LayoutFrame id=1 x=0.0 y=0.0 width=390.0 height=844.0
-  LayoutFrame id=2 x=0.0 y=0.0 width=390.0 height=110.0
-  LayoutFrame id=3 x=16.0 y=16.0 width=358.0 height=29.0
-  LayoutFrame id=4 x=16.0 y=57.0 width=358.0 height=37.0
+  LayoutFrame id=2 x=121.0 y=367.0 width=148.0 height=110.0
+  LayoutFrame id=3 x=16.0 y=16.0 width=116.0 height=29.0
+  LayoutFrame id=4 x=29.0 y=57.0 width=88.0 height=37.0
   LayoutFrame id=5 x=0.0 y=0.0 width=40.0 height=37.0
-  LayoutFrame id=6 x=48.0 y=0.0 width=41.0 height=37.0
+  LayoutFrame id=6 x=48.0 y=0.0 width=40.0 height=37.0

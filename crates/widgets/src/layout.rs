@@ -1,9 +1,10 @@
 use mf_core::dsl::WithChildren;
 use mf_core::view::{View, WidgetElement};
+use native_schema::JustifyContent;
 
 use crate::color::Color;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Alignment {
     Leading,
     Center,
@@ -16,6 +17,7 @@ pub struct VStack {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    justify_content: JustifyContent,
     background: Option<Color>,
 }
 
@@ -31,6 +33,7 @@ impl VStack {
             spacing: 8.0,
             padding: 0.0,
             alignment: Alignment::Stretch,
+            justify_content: JustifyContent::Start,
             background: None,
         }
     }
@@ -47,6 +50,11 @@ impl VStack {
 
     pub fn alignment(mut self, alignment: Alignment) -> Self {
         self.alignment = alignment;
+        self
+    }
+
+    pub fn justify_content(mut self, justify_content: JustifyContent) -> Self {
+        self.justify_content = justify_content;
         self
     }
 
@@ -64,6 +72,7 @@ impl WithChildren for VStack {
                 spacing: self.spacing,
                 padding: self.padding,
                 alignment: self.alignment,
+                justify_content: self.justify_content,
                 background: self.background,
             },
             children,
@@ -76,6 +85,7 @@ pub struct HStack {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    justify_content: JustifyContent,
     background: Option<Color>,
 }
 
@@ -91,6 +101,7 @@ impl HStack {
             spacing: 8.0,
             padding: 0.0,
             alignment: Alignment::Center,
+            justify_content: JustifyContent::Start,
             background: None,
         }
     }
@@ -110,6 +121,11 @@ impl HStack {
         self
     }
 
+    pub fn justify_content(mut self, justify_content: JustifyContent) -> Self {
+        self.justify_content = justify_content;
+        self
+    }
+
     pub fn background(mut self, color: Color) -> Self {
         self.background = Some(color);
         self
@@ -124,6 +140,7 @@ impl WithChildren for HStack {
                 spacing: self.spacing,
                 padding: self.padding,
                 alignment: self.alignment,
+                justify_content: self.justify_content,
                 background: self.background,
             },
             children,
@@ -142,6 +159,7 @@ pub struct StackElement {
     spacing: f32,
     padding: f32,
     alignment: Alignment,
+    justify_content: JustifyContent,
     background: Option<Color>,
 }
 
@@ -162,6 +180,10 @@ impl StackElement {
         self.alignment
     }
 
+    pub fn justify_content(&self) -> JustifyContent {
+        self.justify_content
+    }
+
     pub fn background_value(&self) -> Option<&Color> {
         self.background.as_ref()
     }
@@ -177,11 +199,12 @@ impl WidgetElement for StackElement {
 
     fn describe(&self) -> String {
         format!(
-            "{}(spacing: {}, padding: {}, alignment: {:?}, background: {:?})",
+            "{}(spacing: {}, padding: {}, alignment: {:?}, justify_content: {:?}, background: {:?})",
             self.name(),
             self.spacing,
             self.padding,
             self.alignment,
+            self.justify_content,
             self.background
         )
     }
@@ -205,6 +228,7 @@ mod tests {
             .expect("stack element");
 
         assert!(matches!(stack.alignment(), Alignment::Stretch));
+        assert_eq!(stack.justify_content(), JustifyContent::Start);
     }
 
     #[test]
@@ -217,6 +241,7 @@ mod tests {
             .expect("stack element");
 
         assert!(matches!(stack.alignment(), Alignment::Center));
+        assert_eq!(stack.justify_content(), JustifyContent::Start);
     }
 
     #[test]
@@ -230,5 +255,33 @@ mod tests {
             .expect("stack element");
 
         assert_eq!(stack.background_value(), Some(&color));
+    }
+
+    #[test]
+    fn stack_justify_content_builder_preserves_value() {
+        let view = VStack::new()
+            .justify_content(JustifyContent::Center)
+            .with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert_eq!(stack.justify_content(), JustifyContent::Center);
+    }
+
+    #[test]
+    fn stack_justify_content_supports_stretch() {
+        let view = HStack::new()
+            .justify_content(JustifyContent::Stretch)
+            .with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert_eq!(stack.justify_content(), JustifyContent::Stretch);
     }
 }

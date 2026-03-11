@@ -46,33 +46,38 @@ fn album_list_append_item_snapshot_matches_fixture() {
 }
 
 fn counter_view(count: i32) -> View {
-    SafeArea().with_children(vec![VStack()
-        .spacing(12.0)
-        .padding(16.0)
-        .with_children(vec![
-            Text(format!("Count: {count}"))
-                .font(Font::bold(24.0))
-                .color(Color::primary())
-                .into_view(),
-            HStack()
-                .spacing(8.0)
-                .with_children(vec![
-                    Button("−")
-                        .background(Color::hex_or_black("#D14A42"))
-                        .foreground(Color::hex_or_black("#F6F0EB"))
-                        .corner_radius(12.0)
-                        .on_click(|| {})
-                        .into_view(),
-                    Button("+")
-                        .background(Color::hex_or_black("#248C61"))
-                        .foreground(Color::hex_or_black("#F6F0EB"))
-                        .corner_radius(12.0)
-                        .on_click(|| {})
-                        .into_view(),
-                ])
-                .into_view(),
-        ])
-        .into_view()])
+    SafeArea()
+        .background(Color::hex_or_black("#FAF6F1"))
+        .alignment(Alignment::Center)
+        .justify_content(JustifyContent::Center)
+        .with_children(vec![VStack()
+            .spacing(12.0)
+            .padding(16.0)
+            .alignment(Alignment::Center)
+            .with_children(vec![
+                Text(format!("Count: {count}"))
+                    .font(Font::bold(24.0))
+                    .color(Color::primary())
+                    .into_view(),
+                HStack()
+                    .spacing(8.0)
+                    .with_children(vec![
+                        Button("−")
+                            .background(Color::hex_or_black("#D14A42"))
+                            .foreground(Color::hex_or_black("#F6F0EB"))
+                            .corner_radius(12.0)
+                            .on_click(|| {})
+                            .into_view(),
+                        Button("+")
+                            .background(Color::hex_or_black("#248C61"))
+                            .foreground(Color::hex_or_black("#F6F0EB"))
+                            .corner_radius(12.0)
+                            .on_click(|| {})
+                            .into_view(),
+                    ])
+                    .into_view(),
+            ])
+            .into_view()])
 }
 
 fn album_list_view(albums: &[AlbumFixture]) -> View {
@@ -219,6 +224,9 @@ fn format_prop_value(value: &PropValue) -> String {
         ),
         PropValue::Axis(axis) => format!("Axis({axis:?})"),
         PropValue::Alignment(alignment) => format!("Alignment({alignment:?})"),
+        PropValue::JustifyContent(justify_content) => {
+            format!("JustifyContent({justify_content:?})")
+        }
         PropValue::SafeAreaEdges(edges) => format!("SafeAreaEdges({edges:?})"),
         PropValue::FontWeight(weight) => format!("FontWeight({weight:?})"),
         PropValue::Insets(insets) => format!(

@@ -26,13 +26,15 @@ where
             let increment = set_count.clone();
             let _keep_alive = &interval;
             ui! {
-                SafeArea {
-                    VStack(spacing = 12.0, padding = 16.0, alignment = Alignment::Center).background(Color::hex_or_black("#FAF6F1")) {
+                SafeArea()
+                    .background(Color::hex_or_black("#FAF6F1"))
+                    .justify_content(JustifyContent::Stretch) {
+                    VStack(spacing = 15.0, padding = 16.0, alignment = Alignment::Center, justify_content = JustifyContent::Center) {
                         Text(format!("Count: {}", current))
                             .font(Font::bold(24.0))
                             .color(Color::primary())
                         HStack(spacing = 8.0) {
-                            Button("−")
+                            Button("−") 
                                 .background(Color::hex_or_black("#D14A42"))
                                 .foreground(Color::hex_or_black("#F6F0EB"))
                                 .corner_radius(12.0)

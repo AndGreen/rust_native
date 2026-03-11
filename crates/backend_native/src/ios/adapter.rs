@@ -157,6 +157,7 @@ impl PlatformAdapter for IosAdapter {
             | PropKey::Spacing
             | PropKey::Padding
             | PropKey::Alignment
+            | PropKey::JustifyContent
             | PropKey::SafeAreaEdges
             | PropKey::Width
             | PropKey::Height

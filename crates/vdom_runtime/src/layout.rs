@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use native_schema::{
-    Alignment, Axis, EdgeInsets, ElementKind, LayoutFrame, PropKey, PropValue, SafeAreaEdges,
+    Alignment, Axis, EdgeInsets, ElementKind, JustifyContent, LayoutFrame, PropKey, PropValue,
+    SafeAreaEdges,
 };
 use taffy::prelude::*;
 
@@ -24,6 +25,7 @@ struct LayoutProps {
     spacing: f32,
     padding: EdgeInsets,
     alignment: Alignment,
+    justify_content: JustifyContent,
     safe_area_edges: Option<SafeAreaEdges>,
     width: Option<f32>,
     height: Option<f32>,
@@ -43,6 +45,7 @@ impl LayoutProps {
                 spacing: 0.0,
                 padding: EdgeInsets::all(0.0),
                 alignment: Alignment::Leading,
+                justify_content: JustifyContent::Start,
                 safe_area_edges: None,
                 width: None,
                 height: None,
@@ -58,6 +61,7 @@ impl LayoutProps {
                 spacing: 0.0,
                 padding: EdgeInsets::all(0.0),
                 alignment: Alignment::Leading,
+                justify_content: JustifyContent::Start,
                 safe_area_edges: None,
                 width: None,
                 height: None,
@@ -82,6 +86,11 @@ impl LayoutProps {
         if let Some(PropValue::Alignment(alignment)) = prop_value(node, PropKey::Alignment) {
             props.alignment = *alignment;
         }
+        if let Some(PropValue::JustifyContent(justify_content)) =
+            prop_value(node, PropKey::JustifyContent)
+        {
+            props.justify_content = *justify_content;
+        }
         if let Some(PropValue::SafeAreaEdges(edges)) = prop_value(node, PropKey::SafeAreaEdges) {
             props.safe_area_edges = Some(*edges);
         }
@@ -103,6 +112,7 @@ impl LayoutProps {
 struct ParentLayoutContext {
     axis: Axis,
     alignment: Alignment,
+    justify_content: JustifyContent,
 }
 
 pub(crate) fn compute_layout_frames(root: &CanonicalNode, host_size: HostSize) -> Vec<LayoutFrame> {
@@ -138,6 +148,7 @@ fn build_taffy_tree(
         | NodeDescriptor::Element(ElementKind::List) => Some(ParentLayoutContext {
             axis: props.axis,
             alignment: props.alignment,
+            justify_content: props.justify_content,
         }),
         _ => None,
     };
@@ -193,12 +204,8 @@ fn style_for_node(
         top: points(resolved_padding.top),
         bottom: points(resolved_padding.bottom),
     };
-    if !matches!(
-        node.descriptor,
-        NodeDescriptor::Element(ElementKind::SafeArea)
-    ) {
-        style.align_items = Some(map_alignment(props.alignment));
-    }
+    style.align_items = Some(map_alignment(props.alignment));
+    style.justify_content = Some(map_justify_content(props.justify_content));
 
     if let Some(value) = props.width {
         style.size.width = points(value);
@@ -243,6 +250,7 @@ fn style_for_node(
                     height: points(props.spacing),
                 },
             };
+            apply_main_axis_stretch_if_needed(&mut style, props, parent_context);
         }
         NodeDescriptor::Text => {
             let (width, height) = intrinsic_text_size(node);
@@ -316,8 +324,40 @@ fn text_should_fill_parent_width(parent_context: Option<ParentLayoutContext>) ->
         Some(ParentLayoutContext {
             axis: Axis::Vertical,
             alignment: Alignment::Stretch,
+            ..
         })
     )
+}
+
+fn apply_main_axis_stretch_if_needed(
+    style: &mut Style,
+    props: &LayoutProps,
+    parent_context: Option<ParentLayoutContext>,
+) {
+    let should_stretch = matches!(
+        parent_context,
+        Some(ParentLayoutContext {
+            axis: Axis::Vertical,
+            justify_content: JustifyContent::Stretch,
+            ..
+        }) if props.height.is_none()
+    ) || matches!(
+        parent_context,
+        Some(ParentLayoutContext {
+            axis: Axis::Horizontal,
+            justify_content: JustifyContent::Stretch,
+            ..
+        }) if props.width.is_none()
+    );
+
+    if !should_stretch {
+        return;
+    }
+
+    match parent_context.expect("checked above").axis {
+        Axis::Vertical => style.size.height = percent(1.0),
+        Axis::Horizontal => style.size.width = percent(1.0),
+    }
 }
 
 fn map_alignment(alignment: Alignment) -> AlignItems {
@@ -326,6 +366,15 @@ fn map_alignment(alignment: Alignment) -> AlignItems {
         Alignment::Center => AlignItems::Center,
         Alignment::Trailing => AlignItems::End,
         Alignment::Stretch => AlignItems::Stretch,
+    }
+}
+
+fn map_justify_content(justify_content: JustifyContent) -> taffy::style::JustifyContent {
+    match justify_content {
+        JustifyContent::Start => taffy::style::JustifyContent::Start,
+        JustifyContent::Center => taffy::style::JustifyContent::Center,
+        JustifyContent::End => taffy::style::JustifyContent::End,
+        JustifyContent::Stretch => taffy::style::JustifyContent::Stretch,
     }
 }
 
@@ -414,7 +463,7 @@ fn count_nodes(node: &CanonicalNode) -> usize {
 #[cfg(test)]
 mod tests {
     use mf_core::{IntoView, WithChildren};
-    use mf_widgets::{Alignment, HStack, Input, Text, VStack};
+    use mf_widgets::{Alignment, HStack, Image, Input, JustifyContent, SafeArea, Text, VStack};
     use native_schema::{ElementKind, LayoutFrame};
 
     use super::{compute_layout_frames, validate_layout_frames};
@@ -580,5 +629,46 @@ mod tests {
         assert!(text.y < parent.height - 24.0);
         assert!(text.width > 0.0);
         assert!(text.width < 100.0);
+    }
+
+    #[test]
+    fn safe_area_can_center_child_within_host_frame() {
+        let child = Image("cover.png").size(40.0, 48.0).into_view();
+        let view = SafeArea()
+            .alignment(Alignment::Center)
+            .justify_content(JustifyContent::Center)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let safe_area = frames.iter().find(|frame| frame.id == 1).expect("safe area frame");
+        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+
+        assert_eq!(safe_area.height, 844.0);
+        assert_eq!(child.x, (390.0 - child.width) / 2.0);
+        assert_eq!(child.y, (844.0 - child.height) / 2.0);
+    }
+
+    #[test]
+    fn safe_area_can_stretch_child_along_main_axis() {
+        let child = VStack().with_children(Vec::new()).into_view();
+        let view = SafeArea()
+            .justify_content(JustifyContent::Stretch)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+
+        assert_eq!(child.y, 0.0);
+        assert_eq!(child.height, 844.0);
     }
 }

@@ -6,6 +6,7 @@ mutations:
   SetProp id=23 key=Spacing value=12.0
   SetProp id=23 key=Padding value=Insets(top=8.0, right=8.0, bottom=8.0, left=8.0)
   SetProp id=23 key=Alignment value=Alignment(Center)
+  SetProp id=23 key=JustifyContent value=JustifyContent(Start)
   CreateNode id=24 kind=Image
   SetProp id=24 key=Source value="northern_lights.jpg"
   SetProp id=24 key=Width value=Dimension(Points(60.0))
@@ -17,6 +18,7 @@ mutations:
   SetProp id=25 key=Spacing value=8.0
   SetProp id=25 key=Padding value=Insets(top=0.0, right=0.0, bottom=0.0, left=0.0)
   SetProp id=25 key=Alignment value=Alignment(Leading)
+  SetProp id=25 key=JustifyContent value=JustifyContent(Start)
   CreateTextNode id=26 text="Northern Lights"
   SetProp id=26 key=FontSize value=18.0
   SetProp id=26 key=FontWeight value=FontWeight(SemiBold)

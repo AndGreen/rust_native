@@ -16,6 +16,7 @@ pub use color::Color;
 pub use font::{Font, FontWeight};
 pub use image::ImageView;
 pub use input::InputView;
+pub use native_schema::JustifyContent;
 pub use layout::{Alignment, HStack, VStack};
 pub use list::ListView;
 pub use safe_area::SafeArea;
@@ -27,6 +28,7 @@ pub mod prelude {
     pub use crate::font::{Font, FontWeight};
     pub use crate::image::ImageView;
     pub use crate::input::InputView;
+    pub use crate::JustifyContent;
     pub use crate::layout::{Alignment, HStack as HStackLayout, VStack as VStackLayout};
     pub use crate::list::ListView;
     pub use crate::safe_area::SafeArea as SafeAreaView;
