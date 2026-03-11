@@ -14,6 +14,8 @@ const TEXT_HEIGHT_FACTOR: f32 = 1.2;
 const BUTTON_HORIZONTAL_PADDING: f32 = 16.0;
 const BUTTON_VERTICAL_PADDING: f32 = 10.0;
 const BUTTON_MIN_HEIGHT: f32 = 32.0;
+const INPUT_VERTICAL_PADDING: f32 = 12.0;
+const INPUT_MIN_HEIGHT: f32 = 44.0;
 const FALLBACK_IMAGE_SIZE: f32 = 44.0;
 
 #[derive(Debug, Clone, Copy)]
@@ -239,6 +241,18 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
                 height: points(if is_root { host_size.height } else { height }),
             };
         }
+        NodeDescriptor::Element(ElementKind::Input) => {
+            let height = intrinsic_input_height(node, &props);
+            if is_root {
+                style.size.width = points(host_size.width);
+            } else if let Some(width) = props.width {
+                style.size.width = points(width);
+            } else {
+                // Inputs should fill the parent content box and never size to text length.
+                style.size.width = percent(1.0);
+            }
+            style.size.height = points(if is_root { host_size.height } else { height });
+        }
         NodeDescriptor::Element(_) => {}
     }
 
@@ -279,6 +293,13 @@ fn intrinsic_image_size(props: &LayoutProps) -> (f32, f32) {
         props.width.unwrap_or(FALLBACK_IMAGE_SIZE),
         props.height.unwrap_or(FALLBACK_IMAGE_SIZE),
     )
+}
+
+fn intrinsic_input_height(node: &CanonicalNode, props: &LayoutProps) -> f32 {
+    let (_, text_height) = intrinsic_text_size(node);
+    props
+        .height
+        .unwrap_or((text_height + INPUT_VERTICAL_PADDING * 2.0).max(INPUT_MIN_HEIGHT))
 }
 
 fn collect_layout_frames(
@@ -330,10 +351,13 @@ fn count_nodes(node: &CanonicalNode) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use mf_core::{IntoView, WithChildren};
+    use mf_widgets::{Alignment, Input, VStack};
     use native_schema::{ElementKind, LayoutFrame};
 
-    use super::validate_layout_frames;
+    use super::{compute_layout_frames, validate_layout_frames};
     use crate::tree::{CanonicalNode, NodeDescriptor};
+    use crate::types::HostSize;
 
     #[test]
     fn layout_frame_validation_rejects_duplicates() {
@@ -343,6 +367,8 @@ mod tests {
             props: Vec::new(),
             text: None,
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children: Vec::new(),
         };
 
@@ -367,5 +393,26 @@ mod tests {
             validate_layout_frames(&node, &frames)
         }));
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn input_layout_stays_within_parent_content_box() {
+        let view = VStack()
+            .padding(24.0)
+            .alignment(Alignment::Leading)
+            .with_children(vec![Input("hello").into_view()]);
+        let root = crate::tree::canonicalize_view(1, &view, vec![crate::tree::canonicalize_view(
+            2,
+            view.children().first().expect("input child"),
+            Vec::new(),
+        )]);
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
+        let input = frames.iter().find(|frame| frame.id == 2).expect("input frame");
+
+        assert_eq!(input.x, 24.0);
+        assert_eq!(input.width, parent.width - 48.0);
+        assert!(input.height >= 44.0);
     }
 }

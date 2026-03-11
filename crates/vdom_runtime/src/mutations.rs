@@ -34,6 +34,18 @@ pub(crate) fn emit_create_subtree(node: &CanonicalNode, mutations: &mut Vec<Muta
             event: EventKind::Tap,
         });
     }
+    if node.input_handler.is_some() {
+        mutations.push(Mutation::AttachEventListener {
+            id: node.id,
+            event: EventKind::TextInput,
+        });
+    }
+    if node.focus_change_handler.is_some() {
+        mutations.push(Mutation::AttachEventListener {
+            id: node.id,
+            event: EventKind::FocusChanged,
+        });
+    }
 
     for (index, child) in node.children.iter().enumerate() {
         emit_create_subtree(child, mutations);
@@ -56,8 +68,7 @@ pub(crate) fn diff_node(
         return;
     }
 
-    if previous.tap_handler.is_some() != next.tap_handler.is_some() || props_removed(previous, next)
-    {
+    if listener_signature(previous) != listener_signature(next) || props_removed(previous, next) {
         mutations.push(replace_mutation(previous.id, next));
         emit_replace_payload(next, mutations);
         return;
@@ -138,6 +149,18 @@ fn emit_replace_payload(node: &CanonicalNode, mutations: &mut Vec<Mutation>) {
             event: EventKind::Tap,
         });
     }
+    if node.input_handler.is_some() {
+        mutations.push(Mutation::AttachEventListener {
+            id: node.id,
+            event: EventKind::TextInput,
+        });
+    }
+    if node.focus_change_handler.is_some() {
+        mutations.push(Mutation::AttachEventListener {
+            id: node.id,
+            event: EventKind::FocusChanged,
+        });
+    }
 
     for (index, child) in node.children.iter().enumerate() {
         emit_create_subtree(child, mutations);
@@ -154,4 +177,12 @@ fn props_removed(previous: &CanonicalNode, next: &CanonicalNode) -> bool {
         .props
         .iter()
         .any(|(key, _)| prop_value(next, *key).is_none())
+}
+
+fn listener_signature(node: &CanonicalNode) -> (bool, bool, bool) {
+    (
+        node.tap_handler.is_some(),
+        node.input_handler.is_some(),
+        node.focus_change_handler.is_some(),
+    )
 }

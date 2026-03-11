@@ -55,6 +55,7 @@ impl ColorValue {
 pub enum EventKind {
     Tap,
     TextInput,
+    FocusChanged,
     Scroll,
     Appear,
     Disappear,
@@ -74,6 +75,7 @@ pub enum PropKey {
     CornerRadius,
     Source,
     Enabled,
+    Focused,
     Width,
     Height,
     MinWidth,
@@ -160,6 +162,7 @@ mod tests {
             PropKey::CornerRadius,
             PropKey::Source,
             PropKey::Enabled,
+            PropKey::Focused,
             PropKey::Width,
             PropKey::Height,
             PropKey::MinWidth,
@@ -170,7 +173,7 @@ mod tests {
             PropKey::FlexShrink,
         ];
 
-        assert_eq!(keys.len(), 20);
+        assert_eq!(keys.len(), 21);
     }
 
     #[test]

@@ -157,6 +157,22 @@ impl AndroidBridge for AndroidJniBridge {
         Ok(())
     }
 
+    fn bind_focus_changed(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError> {
+        unsafe {
+            rust_native_android_bind_listener(
+                handle,
+                node_id,
+                event_kind_code(EventKind::FocusChanged),
+            )
+        };
+        Ok(())
+    }
+
+    fn set_focused(&mut self, handle: usize, focused: bool) -> Result<(), BackendError> {
+        unsafe { rust_native_android_set_focused(handle, focused) };
+        Ok(())
+    }
+
     fn apply_frame(&mut self, handle: usize, frame: LayoutFrame) -> Result<(), BackendError> {
         unsafe {
             rust_native_android_apply_frame(handle, frame.x, frame.y, frame.width, frame.height)
@@ -193,9 +209,10 @@ fn event_kind_code(kind: EventKind) -> u32 {
     match kind {
         EventKind::Tap => 0,
         EventKind::TextInput => 1,
-        EventKind::Scroll => 2,
-        EventKind::Appear => 3,
-        EventKind::Disappear => 4,
+        EventKind::FocusChanged => 2,
+        EventKind::Scroll => 3,
+        EventKind::Appear => 4,
+        EventKind::Disappear => 5,
     }
 }
 
@@ -227,6 +244,7 @@ unsafe extern "C" {
     fn rust_native_android_set_font(kind: u32, handle: usize, size: f32, weight: u32);
     fn rust_native_android_set_corner_radius(handle: usize, radius: f32);
     fn rust_native_android_set_enabled(handle: usize, enabled: bool);
+    fn rust_native_android_set_focused(handle: usize, focused: bool);
     fn rust_native_android_set_source(handle: usize, text_ptr: *const u8, text_len: usize);
     fn rust_native_android_bind_listener(handle: usize, node_id: UiNodeId, event_kind: u32);
     fn rust_native_android_apply_frame(handle: usize, x: f32, y: f32, width: f32, height: f32);
@@ -306,6 +324,9 @@ unsafe fn rust_native_android_set_corner_radius(_handle: usize, _radius: f32) {}
 
 #[cfg(not(target_os = "android"))]
 unsafe fn rust_native_android_set_enabled(_handle: usize, _enabled: bool) {}
+
+#[cfg(not(target_os = "android"))]
+unsafe fn rust_native_android_set_focused(_handle: usize, _focused: bool) {}
 
 #[cfg(not(target_os = "android"))]
 unsafe fn rust_native_android_set_source(_handle: usize, _text_ptr: *const u8, _text_len: usize) {}

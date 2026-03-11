@@ -5,6 +5,7 @@ use mf_core::{Fragment, View};
 use mf_widgets::button::ButtonAction;
 use mf_widgets::button::ButtonView;
 use mf_widgets::image::ImageView;
+use mf_widgets::input::{FocusChangeAction, InputAction, InputView};
 use mf_widgets::layout::{Alignment as WidgetAlignment, Axis as WidgetAxis, StackElement};
 use mf_widgets::safe_area::SafeArea;
 use mf_widgets::text::TextView;
@@ -20,6 +21,8 @@ pub(crate) struct CanonicalNode {
     pub(crate) props: Vec<(PropKey, PropValue)>,
     pub(crate) text: Option<String>,
     pub(crate) tap_handler: Option<ButtonAction>,
+    pub(crate) input_handler: Option<InputAction>,
+    pub(crate) focus_change_handler: Option<FocusChangeAction>,
     pub(crate) children: Vec<CanonicalNode>,
 }
 
@@ -37,6 +40,8 @@ impl NodeDescriptor {
             Self::Element(ElementKind::Button)
         } else if view.element().as_any().is::<ImageView>() {
             Self::Element(ElementKind::Image)
+        } else if view.element().as_any().is::<InputView>() {
+            Self::Element(ElementKind::Input)
         } else if view.element().as_any().is::<SafeArea>() {
             Self::Element(ElementKind::SafeArea)
         } else if view.element().as_any().is::<StackElement>() {
@@ -77,6 +82,8 @@ pub(crate) fn canonicalize_view(
             props: text_props(text),
             text: Some(text.content().to_string()),
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -88,6 +95,21 @@ pub(crate) fn canonicalize_view(
             props: button_props(button),
             text: Some(button.label().to_string()),
             tap_handler: button.action().map(Arc::clone),
+            input_handler: None,
+            focus_change_handler: None,
+            children,
+        };
+    }
+
+    if let Some(input) = view.element().as_any().downcast_ref::<InputView>() {
+        return CanonicalNode {
+            id,
+            descriptor: NodeDescriptor::Element(ElementKind::Input),
+            props: input_props(input),
+            text: Some(input.value().to_string()),
+            tap_handler: None,
+            input_handler: input.input_action().map(Arc::clone),
+            focus_change_handler: input.focus_change_action().map(Arc::clone),
             children,
         };
     }
@@ -99,6 +121,8 @@ pub(crate) fn canonicalize_view(
             props: image_props(image),
             text: None,
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -110,6 +134,8 @@ pub(crate) fn canonicalize_view(
             props: safe_area_props(safe_area),
             text: None,
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -121,6 +147,8 @@ pub(crate) fn canonicalize_view(
             props: stack_props(stack),
             text: None,
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -132,6 +160,8 @@ pub(crate) fn canonicalize_view(
             props: list_props(),
             text: None,
             tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -142,17 +172,33 @@ pub(crate) fn canonicalize_view(
         props: Vec::new(),
         text: None,
         tap_handler: None,
+        input_handler: None,
+        focus_change_handler: None,
         children,
     }
 }
 
 pub(crate) fn collect_tap_handlers(root: &CanonicalNode) -> HashMap<UiNodeId, ButtonAction> {
     let mut handlers = HashMap::new();
-    collect_handlers_recursive(root, &mut handlers);
+    collect_tap_handlers_recursive(root, &mut handlers);
     handlers
 }
 
-fn collect_handlers_recursive(
+pub(crate) fn collect_input_handlers(root: &CanonicalNode) -> HashMap<UiNodeId, InputAction> {
+    let mut handlers = HashMap::new();
+    collect_input_handlers_recursive(root, &mut handlers);
+    handlers
+}
+
+pub(crate) fn collect_focus_change_handlers(
+    root: &CanonicalNode,
+) -> HashMap<UiNodeId, FocusChangeAction> {
+    let mut handlers = HashMap::new();
+    collect_focus_change_handlers_recursive(root, &mut handlers);
+    handlers
+}
+
+fn collect_tap_handlers_recursive(
     node: &CanonicalNode,
     handlers: &mut HashMap<UiNodeId, ButtonAction>,
 ) {
@@ -160,7 +206,31 @@ fn collect_handlers_recursive(
         handlers.insert(node.id, Arc::clone(handler));
     }
     for child in &node.children {
-        collect_handlers_recursive(child, handlers);
+        collect_tap_handlers_recursive(child, handlers);
+    }
+}
+
+fn collect_input_handlers_recursive(
+    node: &CanonicalNode,
+    handlers: &mut HashMap<UiNodeId, InputAction>,
+) {
+    if let Some(handler) = &node.input_handler {
+        handlers.insert(node.id, Arc::clone(handler));
+    }
+    for child in &node.children {
+        collect_input_handlers_recursive(child, handlers);
+    }
+}
+
+fn collect_focus_change_handlers_recursive(
+    node: &CanonicalNode,
+    handlers: &mut HashMap<UiNodeId, FocusChangeAction>,
+) {
+    if let Some(handler) = &node.focus_change_handler {
+        handlers.insert(node.id, Arc::clone(handler));
+    }
+    for child in &node.children {
+        collect_focus_change_handlers_recursive(child, handlers);
     }
 }
 
@@ -254,6 +324,43 @@ fn image_props(image: &ImageView) -> Vec<(PropKey, PropValue)> {
     props
 }
 
+fn input_props(input: &InputView) -> Vec<(PropKey, PropValue)> {
+    let mut props = Vec::new();
+    if let Some(color) = input.color_value() {
+        props.push((
+            PropKey::Color,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    if let Some(color) = input.background_value() {
+        props.push((
+            PropKey::BackgroundColor,
+            PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
+        ));
+    }
+    if let Some(font) = input.font_value() {
+        props.push((PropKey::FontSize, PropValue::Float(font.size)));
+        props.push((
+            PropKey::FontWeight,
+            PropValue::FontWeight(match font.weight {
+                mf_widgets::FontWeight::Regular => FontWeight::Regular,
+                mf_widgets::FontWeight::SemiBold => FontWeight::SemiBold,
+                mf_widgets::FontWeight::Bold => FontWeight::Bold,
+            }),
+        ));
+    }
+    if let Some(radius) = input.corner_radius_value() {
+        props.push((PropKey::CornerRadius, PropValue::Float(radius)));
+    }
+    if !input.is_enabled() {
+        props.push((PropKey::Enabled, PropValue::Bool(false)));
+    }
+    if input.is_focused() {
+        props.push((PropKey::Focused, PropValue::Bool(true)));
+    }
+    props
+}
+
 fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
     vec![
         (
@@ -302,7 +409,7 @@ fn list_props() -> Vec<(PropKey, PropValue)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mf_widgets::{Button, Color};
+    use mf_widgets::{Button, Color, Input};
 
     #[test]
     fn button_props_include_visual_style_and_enabled_state() {
@@ -324,5 +431,21 @@ mod tests {
         )));
         assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(10.0))));
         assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
+    }
+
+    #[test]
+    fn input_props_include_visual_state_focus_and_enabled() {
+        let input = Input("alex")
+            .foreground(Color::new(0.2, 0.3, 0.4))
+            .background(Color::new(0.9, 0.8, 0.7))
+            .corner_radius(12.0)
+            .focused(true)
+            .enabled(false);
+
+        let props = input_props(&input);
+
+        assert!(props.contains(&(PropKey::Focused, PropValue::Bool(true))));
+        assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
+        assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(12.0))));
     }
 }

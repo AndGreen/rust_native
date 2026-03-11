@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use crate::button::ButtonView;
 use crate::image::ImageView;
+use crate::input::InputView;
 use crate::layout::{HStack, VStack};
 use crate::list::ListView;
 use crate::safe_area::SafeArea;
@@ -25,6 +26,10 @@ pub fn HStack() -> HStack {
 
 pub fn Image(source: impl Into<String>) -> ImageView {
     ImageView::new(source)
+}
+
+pub fn Input(value: impl Into<String>) -> InputView {
+    InputView::new(value)
 }
 
 pub fn SafeArea() -> SafeArea {

@@ -63,6 +63,8 @@ pub(super) trait AndroidBridge {
     fn set_source(&mut self, handle: usize, source: &str) -> Result<(), BackendError>;
     fn bind_tap(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError>;
     fn bind_text_input(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError>;
+    fn bind_focus_changed(&mut self, handle: usize, node_id: UiNodeId) -> Result<(), BackendError>;
+    fn set_focused(&mut self, handle: usize, focused: bool) -> Result<(), BackendError>;
     fn apply_frame(&mut self, handle: usize, frame: LayoutFrame) -> Result<(), BackendError>;
     fn flush(&mut self) -> Result<(), BackendError>;
     fn drain_events(&mut self) -> Vec<UiEvent> {
@@ -210,6 +212,20 @@ where
                     Ok(())
                 }
             },
+            PropKey::Focused => {
+                if kind != ElementKind::Input {
+                    return Err(BackendError::BatchRejected(format!(
+                        "Focused is unsupported for {kind:?}"
+                    )));
+                }
+                match props.get(&PropKey::Focused) {
+                    Some(PropValue::Bool(focused)) => self.bridge.set_focused(handle, *focused),
+                    _ => {
+                        eprintln!("[backend_native/android] ignoring invalid Focused prop");
+                        Ok(())
+                    }
+                }
+            }
             PropKey::Source => match props.get(&PropKey::Source) {
                 Some(PropValue::String(source)) => self.bridge.set_source(handle, source),
                 _ => {
@@ -274,6 +290,22 @@ where
                     self.bridge.bind_text_input(handle, node_id)?;
                 }
             }
+            EventKind::FocusChanged => {
+                if kind != ElementKind::Input {
+                    eprintln!(
+                        "[backend_native/android] ignoring FocusChanged listener for {kind:?}"
+                    );
+                    return Ok(());
+                }
+                let should_wire = update_binding(handle, node_id, |binding| {
+                    let should_wire = !binding.focus_changed;
+                    binding.focus_changed = true;
+                    should_wire
+                });
+                if should_wire {
+                    self.bridge.bind_focus_changed(handle, node_id)?;
+                }
+            }
             EventKind::Appear => {
                 update_binding(handle, node_id, |binding| binding.appear = true);
             }
@@ -314,11 +346,13 @@ mod tests {
     enum Op {
         BindTap(usize, UiNodeId),
         BindTextInput(usize, UiNodeId),
+        BindFocusChanged(usize, UiNodeId),
         SetColor(ElementKind, usize, ColorValue),
         SetBackgroundColor(usize, ColorValue),
         SetFont(ElementKind, usize, f32, FontWeight),
         SetCornerRadius(usize, f32),
         SetEnabled(usize, bool),
+        SetFocused(usize, bool),
         SetSource(usize, String),
     }
 
@@ -439,6 +473,20 @@ mod tests {
             Ok(())
         }
 
+        fn bind_focus_changed(
+            &mut self,
+            handle: usize,
+            node_id: UiNodeId,
+        ) -> Result<(), BackendError> {
+            self.ops.push(Op::BindFocusChanged(handle, node_id));
+            Ok(())
+        }
+
+        fn set_focused(&mut self, handle: usize, focused: bool) -> Result<(), BackendError> {
+            self.ops.push(Op::SetFocused(handle, focused));
+            Ok(())
+        }
+
         fn apply_frame(&mut self, _handle: usize, _frame: LayoutFrame) -> Result<(), BackendError> {
             Ok(())
         }
@@ -464,6 +512,7 @@ mod tests {
         props.insert(PropKey::FontWeight, PropValue::FontWeight(FontWeight::Bold));
         props.insert(PropKey::CornerRadius, PropValue::Float(12.0));
         props.insert(PropKey::Enabled, PropValue::Bool(false));
+        props.insert(PropKey::Focused, PropValue::Bool(true));
         props.insert(PropKey::Source, PropValue::String("cover.png".to_string()));
         props.insert(
             PropKey::Padding,
@@ -486,6 +535,9 @@ mod tests {
             .set_prop(ElementKind::Button, 7, &props, PropKey::Enabled)
             .unwrap();
         adapter
+            .set_prop(ElementKind::Input, 7, &props, PropKey::Focused)
+            .unwrap();
+        adapter
             .set_prop(ElementKind::Image, 7, &props, PropKey::Source)
             .unwrap();
         adapter
@@ -500,6 +552,7 @@ mod tests {
                 Op::SetFont(ElementKind::Button, 7, 18.0, FontWeight::Bold),
                 Op::SetCornerRadius(7, 12.0),
                 Op::SetEnabled(7, false),
+                Op::SetFocused(7, true),
                 Op::SetSource(7, "cover.png".to_string()),
             ]
         );
@@ -521,11 +574,32 @@ mod tests {
         adapter
             .attach_listener(ElementKind::Input, 4, 12, EventKind::TextInput)
             .unwrap();
+        adapter
+            .attach_listener(ElementKind::Input, 4, 12, EventKind::FocusChanged)
+            .unwrap();
+        adapter
+            .attach_listener(ElementKind::Input, 4, 12, EventKind::FocusChanged)
+            .unwrap();
 
         assert_eq!(
             adapter.bridge.ops,
-            vec![Op::BindTap(3, 11), Op::BindTextInput(4, 12)]
+            vec![
+                Op::BindTap(3, 11),
+                Op::BindTextInput(4, 12),
+                Op::BindFocusChanged(4, 12),
+            ]
         );
+    }
+
+    #[test]
+    fn focused_prop_rejects_non_input_nodes() {
+        let mut adapter = AndroidAdapter::new(MockBridge::default());
+        let mut props = HashMap::new();
+        props.insert(PropKey::Focused, PropValue::Bool(true));
+
+        let result = adapter.set_prop(ElementKind::Button, 7, &props, PropKey::Focused);
+
+        assert!(matches!(result, Err(BackendError::BatchRejected(_))));
     }
 
     #[test]

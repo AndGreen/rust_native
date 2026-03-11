@@ -1,0 +1,43 @@
+name: App
+
+options:
+  bundleIdPrefix: dev.andreyzelenin
+  deploymentTarget:
+    iOS: "17.0"
+
+targets:
+  App:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - Info.plist
+    info:
+      path: App/Info.plist
+      properties:
+        UILaunchStoryboardName: LaunchScreen
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.andreyzelenin.formdemo
+        PRODUCT_NAME: App
+        SWIFT_VERSION: 5.0
+        SWIFT_OBJC_BRIDGING_HEADER: App/ExamplesBridge.h
+        EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
+        LIBRARY_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/../../../../target/aarch64-apple-ios-sim/debug
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - -lform_demo
+    preBuildScripts:
+      - name: Build Rust bridge
+        script: |
+          set -eu
+          export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+          CARGO_BIN="${HOME}/.cargo/bin/cargo"
+          if [ ! -x "$CARGO_BIN" ]; then
+            CARGO_BIN="$(command -v cargo)"
+          fi
+          cd "$SRCROOT/../../../.."
+          "$CARGO_BIN" build -p form_demo --target aarch64-apple-ios-sim

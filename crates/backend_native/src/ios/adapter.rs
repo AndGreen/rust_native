@@ -13,9 +13,9 @@ use super::events::{
 };
 use super::uikit::{
     add_subview, apply_background_color, apply_color, apply_corner_radius, apply_enabled,
-    apply_font, apply_image_source, bootstrap_host, create_button, create_image_view, create_label,
-    create_plain_view, create_text_field, insert_subview, release_object, remove_from_superview,
-    set_text_on_view, CGRect, HostViews,
+    apply_focus, apply_font, apply_image_source, bootstrap_host, create_button, create_image_view,
+    create_label, create_plain_view, create_text_field, insert_subview, release_object,
+    remove_from_superview, set_text_on_view, CGRect, HostViews,
 };
 
 #[derive(Default)]
@@ -144,6 +144,14 @@ impl PlatformAdapter for IosAdapter {
                 apply_enabled(handle, props.get(&PropKey::Enabled));
                 Ok(())
             }
+            PropKey::Focused => {
+                if kind != ElementKind::Input {
+                    return Err(BackendError::BatchRejected(format!(
+                        "Focused is unsupported for {kind:?}"
+                    )));
+                }
+                apply_focus(handle, props.get(&PropKey::Focused))
+            }
             PropKey::Source => apply_image_source(handle, props.get(&PropKey::Source)),
             PropKey::Axis
             | PropKey::Spacing
@@ -214,6 +222,34 @@ impl PlatformAdapter for IosAdapter {
                             addTarget: target
                             action: sel!(handleEditingChanged:)
                             forControlEvents: 1u64 << 17
+                        ];
+                    }
+                }
+            }
+            EventKind::FocusChanged => {
+                if kind != ElementKind::Input {
+                    eprintln!("[backend_native/ios] ignoring FocusChanged listener for {kind:?}");
+                    return Ok(());
+                }
+                let should_wire = update_binding(handle, node_id, |binding| {
+                    let should_wire = !binding.focus_changed;
+                    binding.focus_changed = true;
+                    should_wire
+                });
+                if should_wire {
+                    let target = shared_event_target();
+                    unsafe {
+                        let _: () = msg_send![
+                            handle,
+                            addTarget: target
+                            action: sel!(handleEditingDidBegin:)
+                            forControlEvents: 1u64 << 16
+                        ];
+                        let _: () = msg_send![
+                            handle,
+                            addTarget: target
+                            action: sel!(handleEditingDidEnd:)
+                            forControlEvents: 1u64 << 18
                         ];
                     }
                 }

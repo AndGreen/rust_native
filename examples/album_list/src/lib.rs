@@ -31,7 +31,7 @@ pub fn create_album_list_app(host_size: HostSize) -> App<NativeBackend> {
         },
     ];
 
-    App::new_with_host_size(NativeBackend, host_size, {
+    App::new_with_host_size(NativeBackend::default(), host_size, {
         let albums = albums.clone();
         move || {
             let data = albums.clone();

@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use mf_core::View;
 use mf_widgets::button::ButtonAction;
+use mf_widgets::input::{FocusChangeAction, InputAction};
 use native_schema::{LayoutFrame, ProtocolVersion, UiEvent, UiNodeId};
 
 use crate::layout::compute_layout_frames;
 use crate::mutations::{diff_node, emit_create_subtree};
 use crate::tree::{
-    canonicalize_view, collect_tap_handlers, flatten_children, is_fragment, CanonicalNode,
-    NodeDescriptor,
+    canonicalize_view, collect_focus_change_handlers, collect_input_handlers, collect_tap_handlers,
+    flatten_children, is_fragment, CanonicalNode, NodeDescriptor,
 };
 use crate::types::{HostSize, RenderBatch};
 
@@ -17,6 +18,8 @@ pub struct VdomRuntime {
     current_layout: Vec<LayoutFrame>,
     next_id: UiNodeId,
     tap_handlers: HashMap<UiNodeId, ButtonAction>,
+    input_handlers: HashMap<UiNodeId, InputAction>,
+    focus_change_handlers: HashMap<UiNodeId, FocusChangeAction>,
     force_full_resync: bool,
 }
 
@@ -33,6 +36,8 @@ impl VdomRuntime {
             current_layout: Vec::new(),
             next_id: 1,
             tap_handlers: HashMap::new(),
+            input_handlers: HashMap::new(),
+            focus_change_handlers: HashMap::new(),
             force_full_resync: false,
         }
     }
@@ -48,6 +53,8 @@ impl VdomRuntime {
             self.current = None;
             self.current_layout.clear();
             self.tap_handlers.clear();
+            self.input_handlers.clear();
+            self.focus_change_handlers.clear();
             self.force_full_resync = false;
             return RenderBatch::default();
         };
@@ -62,6 +69,8 @@ impl VdomRuntime {
         let layout_changed = self.force_full_resync || self.current_layout != next_layout;
 
         self.tap_handlers = collect_tap_handlers(&next);
+        self.input_handlers = collect_input_handlers(&next);
+        self.focus_change_handlers = collect_focus_change_handlers(&next);
         self.current = Some(next);
         self.current_layout = next_layout.clone();
         self.force_full_resync = false;
@@ -78,10 +87,23 @@ impl VdomRuntime {
     }
 
     pub fn dispatch_event(&self, event: UiEvent) {
-        if let UiEvent::Tap { id } = event {
-            if let Some(handler) = self.tap_handlers.get(&id) {
-                handler();
+        match event {
+            UiEvent::Tap { id } => {
+                if let Some(handler) = self.tap_handlers.get(&id) {
+                    handler();
+                }
             }
+            UiEvent::TextInput { id, value } => {
+                if let Some(handler) = self.input_handlers.get(&id) {
+                    handler(value);
+                }
+            }
+            UiEvent::FocusChanged { id, focused } => {
+                if let Some(handler) = self.focus_change_handlers.get(&id) {
+                    handler(focused);
+                }
+            }
+            UiEvent::Scroll { .. } | UiEvent::Appear { .. } | UiEvent::Disappear { .. } => {}
         }
     }
 
@@ -234,6 +256,118 @@ mod tests {
 
         runtime.dispatch_event(UiEvent::Tap { id: button_id });
         assert_eq!(calls.load(Ordering::Relaxed), 1);
+    }
+
+    #[test]
+    fn input_events_dispatch_to_registered_handlers() {
+        let input_calls = Arc::new(AtomicUsize::new(0));
+        let input_calls_for_handler = Arc::clone(&input_calls);
+        let focus_calls = Arc::new(AtomicUsize::new(0));
+        let focus_calls_for_handler = Arc::clone(&focus_calls);
+        let view = Input("alex")
+            .on_input(move |_| {
+                input_calls_for_handler.fetch_add(1, Ordering::Relaxed);
+            })
+            .on_focus_change(move |_| {
+                focus_calls_for_handler.fetch_add(1, Ordering::Relaxed);
+            })
+            .focused(true)
+            .into_view();
+
+        let mut runtime = VdomRuntime::new();
+        let batch = runtime.render(&view, TEST_HOST);
+        let input_id = batch
+            .mutations
+            .iter()
+            .find_map(|mutation| match mutation {
+                Mutation::AttachEventListener {
+                    id,
+                    event: EventKind::TextInput,
+                } => Some(*id),
+                _ => None,
+            })
+            .expect("input id");
+
+        assert!(batch.mutations.iter().any(|mutation| matches!(
+            mutation,
+            Mutation::AttachEventListener {
+                id,
+                event: EventKind::FocusChanged,
+            } if *id == input_id
+        )));
+
+        runtime.dispatch_event(UiEvent::TextInput {
+            id: input_id,
+            value: "alex@example.com".to_string(),
+        });
+        runtime.dispatch_event(UiEvent::FocusChanged {
+            id: input_id,
+            focused: true,
+        });
+
+        assert_eq!(input_calls.load(Ordering::Relaxed), 1);
+        assert_eq!(focus_calls.load(Ordering::Relaxed), 1);
+    }
+
+    #[test]
+    fn input_mount_emits_non_zero_layout_frame() {
+        let mut runtime = VdomRuntime::new();
+        let batch = render(
+            &mut runtime,
+            VStack()
+                .padding(24.0)
+                .alignment(Alignment::Leading)
+                .with_children(vec![Input("").focused(true).into_view()]),
+        );
+
+        let input_id = batch
+            .mutations
+            .iter()
+            .find_map(|mutation| match mutation {
+                Mutation::CreateNode {
+                    id,
+                    kind: ElementKind::Input,
+                } => Some(*id),
+                _ => None,
+            })
+            .expect("input node id");
+
+        let input_frame = batch
+            .layout
+            .iter()
+            .find(|frame| frame.id == input_id)
+            .expect("input layout frame");
+
+        assert_eq!(input_frame.x, 24.0);
+        assert_eq!(input_frame.width, TEST_HOST.width - 48.0);
+        assert!(input_frame.height >= 44.0);
+    }
+
+    #[test]
+    fn input_text_update_keeps_same_width_and_skips_layout_delta() {
+        let mut runtime = VdomRuntime::new();
+        let first = VStack()
+            .padding(24.0)
+            .alignment(Alignment::Leading)
+            .with_children(vec![Input("").into_view()]);
+        let second = VStack()
+            .padding(24.0)
+            .alignment(Alignment::Leading)
+            .with_children(vec![Input("Asdfasdfasdfasdfasdf").into_view()]);
+
+        let initial = runtime.render(&first, TEST_HOST);
+        let update = runtime.render(&second, TEST_HOST);
+
+        let initial_input = initial
+            .layout
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("initial input frame");
+
+        assert_eq!(initial_input.width, TEST_HOST.width - 48.0);
+        assert_eq!(update.mutations.len(), 1);
+        assert!(matches!(update.mutations[0], Mutation::SetText { .. }));
+        assert!(update.layout.is_empty());
     }
 
     #[test]

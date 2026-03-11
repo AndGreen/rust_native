@@ -12,6 +12,7 @@ pub(super) struct ControlBinding {
     node_id: UiNodeId,
     pub(super) tap: bool,
     pub(super) text_input: bool,
+    pub(super) focus_changed: bool,
     pub(super) appear: bool,
     pub(super) disappear: bool,
 }
@@ -36,6 +37,7 @@ pub(super) fn update_binding<R>(
         node_id,
         tap: false,
         text_input: false,
+        focus_changed: false,
         appear: false,
         disappear: false,
     });
@@ -90,6 +92,14 @@ fn event_target_class() -> &'static Class {
                 sel!(handleEditingChanged:),
                 handle_editing_changed as extern "C" fn(&Object, Sel, *mut Object),
             );
+            decl.add_method(
+                sel!(handleEditingDidBegin:),
+                handle_editing_did_begin as extern "C" fn(&Object, Sel, *mut Object),
+            );
+            decl.add_method(
+                sel!(handleEditingDidEnd:),
+                handle_editing_did_end as extern "C" fn(&Object, Sel, *mut Object),
+            );
         }
         decl.register()
     })
@@ -139,4 +149,38 @@ extern "C" fn handle_editing_changed(_this: &Object, _cmd: Sel, sender: *mut Obj
         id: binding.node_id,
         value,
     });
+}
+
+extern "C" fn handle_editing_did_begin(_this: &Object, _cmd: Sel, sender: *mut Object) {
+    let binding = binding_store()
+        .lock()
+        .unwrap()
+        .get(&(sender as usize))
+        .copied();
+    let Some(binding) = binding else {
+        return;
+    };
+    if binding.focus_changed {
+        queue_event(UiEvent::FocusChanged {
+            id: binding.node_id,
+            focused: true,
+        });
+    }
+}
+
+extern "C" fn handle_editing_did_end(_this: &Object, _cmd: Sel, sender: *mut Object) {
+    let binding = binding_store()
+        .lock()
+        .unwrap()
+        .get(&(sender as usize))
+        .copied();
+    let Some(binding) = binding else {
+        return;
+    };
+    if binding.focus_changed {
+        queue_event(UiEvent::FocusChanged {
+            id: binding.node_id,
+            focused: false,
+        });
+    }
 }

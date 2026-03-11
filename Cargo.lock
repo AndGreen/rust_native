@@ -64,6 +64,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "form_demo"
+version = "0.1.0"
+dependencies = [
+ "backend_native",
+ "mf_core",
+ "mf_macros",
+ "mf_runtime",
+ "mf_widgets",
+ "native_schema",
+]
+
+[[package]]
 name = "grid"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

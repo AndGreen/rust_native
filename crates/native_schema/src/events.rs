@@ -4,6 +4,7 @@ use crate::UiNodeId;
 pub enum UiEvent {
     Tap { id: UiNodeId },
     TextInput { id: UiNodeId, value: String },
+    FocusChanged { id: UiNodeId, focused: bool },
     Scroll { id: UiNodeId, dx: f32, dy: f32 },
     Appear { id: UiNodeId },
     Disappear { id: UiNodeId },
@@ -42,6 +43,22 @@ mod tests {
                 assert_eq!(id, 5);
                 assert_eq!(dx, 4.5);
                 assert_eq!(dy, -8.0);
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn focus_changed_preserves_flag() {
+        let event = UiEvent::FocusChanged {
+            id: 3,
+            focused: true,
+        };
+
+        match event {
+            UiEvent::FocusChanged { id, focused } => {
+                assert_eq!(id, 3);
+                assert!(focused);
             }
             other => panic!("unexpected event: {other:?}"),
         }

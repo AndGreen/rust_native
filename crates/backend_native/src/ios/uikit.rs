@@ -242,6 +242,26 @@ pub(super) fn apply_enabled(handle: *mut Object, value: Option<&PropValue>) {
     }
 }
 
+pub(super) fn apply_focus(
+    handle: *mut Object,
+    value: Option<&PropValue>,
+) -> Result<(), BackendError> {
+    let Some(PropValue::Bool(focused)) = value else {
+        eprintln!("[backend_native/ios] ignoring invalid Focused prop");
+        return Ok(());
+    };
+
+    unsafe {
+        if *focused {
+            let _: BOOL = msg_send![handle, becomeFirstResponder];
+        } else {
+            let _: BOOL = msg_send![handle, resignFirstResponder];
+        }
+    }
+
+    Ok(())
+}
+
 pub(super) fn apply_image_source(
     handle: *mut Object,
     value: Option<&PropValue>,

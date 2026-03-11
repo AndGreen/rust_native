@@ -9,6 +9,7 @@ pub(super) struct ControlBinding {
     node_id: UiNodeId,
     pub(super) tap: bool,
     pub(super) text_input: bool,
+    pub(super) focus_changed: bool,
     pub(super) appear: bool,
     pub(super) disappear: bool,
 }
@@ -33,6 +34,7 @@ pub(super) fn update_binding<R>(
         node_id,
         tap: false,
         text_input: false,
+        focus_changed: false,
         appear: false,
         disappear: false,
     });
@@ -80,4 +82,12 @@ pub unsafe extern "C" fn rust_native_android_queue_text_input(
         String::from_utf8_lossy(bytes).into_owned()
     };
     queue_event(UiEvent::TextInput { id: node_id, value });
+}
+
+#[no_mangle]
+pub extern "C" fn rust_native_android_queue_focus_changed(node_id: UiNodeId, focused: bool) {
+    queue_event(UiEvent::FocusChanged {
+        id: node_id,
+        focused,
+    });
 }

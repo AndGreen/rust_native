@@ -8,7 +8,7 @@ use mf_runtime::{batch_updates, create_signal, start_interval, App, HostSize};
 use mf_widgets::prelude::*;
 
 pub fn create_counter_app(host_size: HostSize) -> App<NativeBackend> {
-    App::new_with_host_size(NativeBackend, host_size, {
+    App::new_with_host_size(NativeBackend::default(), host_size, {
         let (count, set_count) = create_signal(0i32);
 
         let interval = start_interval(Duration::from_secs(1), {
