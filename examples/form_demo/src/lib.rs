@@ -1,12 +1,16 @@
 mod ios_bridge;
 
+use backend_api::Backend;
 use backend_native::NativeBackend;
 use mf_macros::ui;
 use mf_runtime::{create_signal, App, HostSize};
 use mf_widgets::prelude::*;
 
-pub fn create_form_demo_app(host_size: HostSize) -> App<NativeBackend> {
-    App::new_with_host_size(NativeBackend::default(), host_size, {
+pub fn create_form_demo_app<B>(backend: B, host_size: HostSize) -> App<B>
+where
+    B: Backend + Send + 'static,
+{
+    App::new_with_host_size(backend, host_size, {
         let (name, set_name) = create_signal(String::new());
         let (email, set_email) = create_signal(String::new());
         let (focused_field, set_focused_field) = create_signal(String::from("name"));
@@ -86,4 +90,8 @@ pub fn create_form_demo_app(host_size: HostSize) -> App<NativeBackend> {
             }
         }
     })
+}
+
+pub fn create_form_demo_native_app(host_size: HostSize) -> App<NativeBackend> {
+    create_form_demo_app(NativeBackend::default(), host_size)
 }

@@ -1,10 +1,17 @@
+use std::ffi::c_char;
 use std::sync::{Mutex, OnceLock};
 
 use backend_native::NativeBackend;
+use dev_support::{
+    mf_dev_renderer_apply_message as dev_renderer_apply_message,
+    mf_dev_renderer_clear_events_json as dev_renderer_clear_events_json,
+    mf_dev_renderer_reset as dev_renderer_reset,
+    mf_dev_renderer_take_events_json as dev_renderer_take_events_json,
+};
 use mf_runtime::{App, HostSize};
 use native_schema::EdgeInsets;
 
-use crate::create_album_list_app;
+use crate::create_album_list_native_app;
 
 static APP: OnceLock<Mutex<Option<App<NativeBackend>>>> = OnceLock::new();
 
@@ -23,7 +30,7 @@ pub extern "C" fn mf_app_start(
 ) -> bool {
     let host_size =
         HostSize::with_safe_area(width, height, EdgeInsets::new(top, right, bottom, left));
-    let app = create_album_list_app(host_size);
+    let app = create_album_list_native_app(host_size);
     app.repaint();
 
     let mut slot = app_slot().lock().unwrap();
@@ -64,4 +71,24 @@ pub extern "C" fn mf_app_resize(
             EdgeInsets::new(top, right, bottom, left),
         ));
     }
+}
+
+#[no_mangle]
+pub extern "C" fn mf_dev_renderer_apply_message(json: *const c_char) -> bool {
+    dev_renderer_apply_message(json)
+}
+
+#[no_mangle]
+pub extern "C" fn mf_dev_renderer_take_events_json() -> *const c_char {
+    dev_renderer_take_events_json()
+}
+
+#[no_mangle]
+pub extern "C" fn mf_dev_renderer_clear_events_json() {
+    dev_renderer_clear_events_json()
+}
+
+#[no_mangle]
+pub extern "C" fn mf_dev_renderer_reset() {
+    dev_renderer_reset()
 }

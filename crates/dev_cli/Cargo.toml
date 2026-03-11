@@ -1,0 +1,10 @@
+[package]
+name = "dev_cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dev_protocol = { workspace = true }
+dev_support = { workspace = true }
+native_schema = { workspace = true }
+serde_json = { workspace = true }

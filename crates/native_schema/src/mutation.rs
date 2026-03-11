@@ -1,12 +1,14 @@
+use serde::{Deserialize, Serialize};
+
 pub type UiNodeId = u32;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum ProtocolVersion {
     #[default]
     V1,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ElementKind {
     Stack,
     SafeArea,
@@ -17,13 +19,13 @@ pub enum ElementKind {
     Input,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Axis {
     Horizontal,
     Vertical,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Alignment {
     Leading,
     Center,
@@ -31,14 +33,14 @@ pub enum Alignment {
     Stretch,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FontWeight {
     Regular,
     SemiBold,
     Bold,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct ColorValue {
     pub r: f32,
     pub g: f32,
@@ -52,7 +54,7 @@ impl ColorValue {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EventKind {
     Tap,
     TextInput,
@@ -62,7 +64,7 @@ pub enum EventKind {
     Disappear,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PropKey {
     Axis,
     Spacing,
@@ -87,7 +89,7 @@ pub enum PropKey {
     FlexShrink,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum PropValue {
     String(String),
     Bool(bool),
@@ -101,7 +103,7 @@ pub enum PropValue {
     Dimension(crate::DimensionValue),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Mutation {
     CreateNode {
         id: UiNodeId,

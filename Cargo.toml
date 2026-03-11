@@ -3,6 +3,9 @@ members = [
     "crates/core",
     "crates/macros",
     "crates/native_schema",
+    "crates/dev_protocol",
+    "crates/dev_support",
+    "crates/dev_cli",
     "crates/vdom_runtime",
     "crates/backend_api",
     "crates/backend_native",
@@ -23,9 +26,13 @@ version = "0.1.0"
 mf_core = { path = "crates/core" }
 mf_macros = { path = "crates/macros" }
 native_schema = { path = "crates/native_schema" }
+dev_protocol = { path = "crates/dev_protocol" }
+dev_support = { path = "crates/dev_support" }
 vdom_runtime = { path = "crates/vdom_runtime" }
 backend_api = { path = "crates/backend_api" }
 backend_native = { path = "crates/backend_native" }
 backend_wgpu = { path = "crates/backend_wgpu" }
 mf_widgets = { path = "crates/widgets" }
 mf_runtime = { path = "crates/runtime" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,6 +1,7 @@
 use crate::UiNodeId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct EdgeInsets {
     pub top: f32,
     pub right: f32,
@@ -23,7 +24,7 @@ impl EdgeInsets {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SafeAreaEdges {
     Top,
     TopBottom,
@@ -40,13 +41,13 @@ impl SafeAreaEdges {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum DimensionValue {
     Auto,
     Points(f32),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct LayoutFrame {
     pub id: UiNodeId,
     pub x: f32,
@@ -70,7 +71,7 @@ impl LayoutFrame {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LayoutFrameValidationError {
     NonFinitePosition,
     NonFiniteSize,

@@ -1,5 +1,6 @@
 mod ios_bridge;
 
+use backend_api::Backend;
 use backend_native::NativeBackend;
 use mf_macros::ui;
 use mf_runtime::{App, HostSize};
@@ -12,7 +13,10 @@ struct Album {
     cover: &'static str,
 }
 
-pub fn create_album_list_app(host_size: HostSize) -> App<NativeBackend> {
+pub fn create_album_list_app<B>(backend: B, host_size: HostSize) -> App<B>
+where
+    B: Backend + Send + 'static,
+{
     let albums = vec![
         Album {
             title: "Explorations",
@@ -31,7 +35,7 @@ pub fn create_album_list_app(host_size: HostSize) -> App<NativeBackend> {
         },
     ];
 
-    App::new_with_host_size(NativeBackend::default(), host_size, {
+    App::new_with_host_size(backend, host_size, {
         let albums = albums.clone();
         move || {
             let data = albums.clone();
@@ -63,4 +67,8 @@ pub fn create_album_list_app(host_size: HostSize) -> App<NativeBackend> {
             }
         }
     })
+}
+
+pub fn create_album_list_native_app(host_size: HostSize) -> App<NativeBackend> {
+    create_album_list_app(NativeBackend::default(), host_size)
 }

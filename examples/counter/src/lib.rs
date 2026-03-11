@@ -2,13 +2,17 @@ mod ios_bridge;
 
 use std::time::Duration;
 
+use backend_api::Backend;
 use backend_native::NativeBackend;
 use mf_macros::ui;
 use mf_runtime::{batch_updates, create_signal, start_interval, App, HostSize};
 use mf_widgets::prelude::*;
 
-pub fn create_counter_app(host_size: HostSize) -> App<NativeBackend> {
-    App::new_with_host_size(NativeBackend::default(), host_size, {
+pub fn create_counter_app<B>(backend: B, host_size: HostSize) -> App<B>
+where
+    B: Backend + Send + 'static,
+{
+    App::new_with_host_size(backend, host_size, {
         let (count, set_count) = create_signal(0i32);
 
         let interval = start_interval(Duration::from_secs(1), {
@@ -21,6 +25,7 @@ pub fn create_counter_app(host_size: HostSize) -> App<NativeBackend> {
             let decrement = set_count.clone();
             let increment = set_count.clone();
             let _keep_alive = &interval;
+            
             ui! {
                 SafeArea {
                     VStack(spacing = 12.0, padding = 16.0) {
@@ -51,4 +56,8 @@ pub fn create_counter_app(host_size: HostSize) -> App<NativeBackend> {
             }
         }
     })
+}
+
+pub fn create_counter_native_app(host_size: HostSize) -> App<NativeBackend> {
+    create_counter_app(NativeBackend::default(), host_size)
 }

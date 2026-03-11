@@ -1,17 +1,12 @@
 [package]
-name = "form_demo"
+name = "dev_support"
 version = "0.1.0"
 edition = "2021"
-
-[lib]
-crate-type = ["lib", "staticlib"]
 
 [dependencies]
 backend_api = { workspace = true }
 backend_native = { workspace = true }
-dev_support = { workspace = true }
-mf_core = { workspace = true }
-mf_macros = { workspace = true }
+dev_protocol = { workspace = true }
 mf_runtime = { workspace = true }
-mf_widgets = { workspace = true }
 native_schema = { workspace = true }
+serde_json = { workspace = true }

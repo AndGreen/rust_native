@@ -1,6 +1,7 @@
 use crate::UiNodeId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum UiEvent {
     Tap { id: UiNodeId },
     TextInput { id: UiNodeId, value: String },
