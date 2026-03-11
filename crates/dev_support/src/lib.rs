@@ -19,6 +19,7 @@ struct RemoteState {
     events: Vec<UiEvent>,
     pending_host: Option<HostSize>,
     repaint: bool,
+    full_resync: bool,
     shutdown: bool,
 }
 
@@ -107,6 +108,13 @@ impl RemoteBackendHandle {
         repaint
     }
 
+    pub fn take_full_resync(&self) -> bool {
+        let mut state = self.state.lock().unwrap();
+        let full_resync = state.full_resync;
+        state.full_resync = false;
+        full_resync
+    }
+
     pub fn is_shutdown(&self) -> bool {
         self.state.lock().unwrap().shutdown
     }
@@ -127,6 +135,9 @@ fn spawn_worker_control_reader(state: Arc<Mutex<RemoteState>>) {
                 }
                 Ok(Some(WorkerControlMessage::RequestRepaint)) => {
                     state.lock().unwrap().repaint = true;
+                }
+                Ok(Some(WorkerControlMessage::RequestFullResync)) => {
+                    state.lock().unwrap().full_resync = true;
                 }
                 Ok(Some(WorkerControlMessage::Shutdown)) => {
                     state.lock().unwrap().shutdown = true;
@@ -155,6 +166,9 @@ where
         if let Some(host) = handle.take_pending_host() {
             app.set_host_size(host);
         }
+        if handle.take_full_resync() {
+            app.request_full_resync();
+        }
         if handle.take_repaint() {
             app.request_repaint();
         }
@@ -179,6 +193,12 @@ fn initial_host_from_env() -> HostSize {
 
 pub fn request_worker_repaint(writer: &Arc<Mutex<std::process::ChildStdin>>) -> io::Result<()> {
     send_worker_control(writer, &WorkerControlMessage::RequestRepaint)
+}
+
+pub fn request_worker_full_resync(
+    writer: &Arc<Mutex<std::process::ChildStdin>>,
+) -> io::Result<()> {
+    send_worker_control(writer, &WorkerControlMessage::RequestFullResync)
 }
 
 struct DevRenderer {

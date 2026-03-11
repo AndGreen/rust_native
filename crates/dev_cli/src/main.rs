@@ -12,7 +12,7 @@ use std::time::{Duration, SystemTime};
 use dev_protocol::{
     read_json_line, write_json_line, ClientMessage, HostMetrics, ServerMessage, WorkerOutputMessage,
 };
-use dev_support::{request_worker_repaint, send_worker_control, worker_control_from_host};
+use dev_support::{request_worker_full_resync, send_worker_control, worker_control_from_host};
 use native_schema::{EdgeInsets, ProtocolVersion};
 
 struct SharedState {
@@ -258,14 +258,6 @@ fn accept_loop(listener: TcpListener, shared: Arc<Mutex<SharedState>>) {
                         protocol_version: ProtocolVersion::V1,
                     },
                 );
-                let worker = {
-                    let state = shared.lock().unwrap();
-                    state.worker_stdin.clone()
-                };
-                if let Some(worker) = worker {
-                    let _ = request_worker_repaint(&worker);
-                }
-
                 let read_state = shared.clone();
                 thread::spawn(move || handle_client(stream, read_state));
             }
@@ -284,8 +276,12 @@ fn handle_client(stream: TcpStream, shared: Arc<Mutex<SharedState>>) {
     let mut reader = BufReader::new(stream);
     loop {
         match read_json_line::<ClientMessage>(&mut reader) {
-            Ok(Some(ClientMessage::Hello { host, .. })) => update_host(shared.clone(), host),
-            Ok(Some(ClientMessage::HostResized { host })) => update_host(shared.clone(), host),
+            Ok(Some(ClientMessage::Hello { host, .. })) => {
+                update_host(shared.clone(), host, true);
+            }
+            Ok(Some(ClientMessage::HostResized { host })) => {
+                update_host(shared.clone(), host, false);
+            }
             Ok(Some(ClientMessage::UiEvent(event))) => {
                 let writer = {
                     let state = shared.lock().unwrap();
@@ -315,7 +311,7 @@ fn handle_client(stream: TcpStream, shared: Arc<Mutex<SharedState>>) {
     }
 }
 
-fn update_host(shared: Arc<Mutex<SharedState>>, host: HostMetrics) {
+fn update_host(shared: Arc<Mutex<SharedState>>, host: HostMetrics, force_full_resync: bool) {
     let writer = {
         let mut state = shared.lock().unwrap();
         state.host = host;
@@ -323,6 +319,10 @@ fn update_host(shared: Arc<Mutex<SharedState>>, host: HostMetrics) {
     };
     if let Some(writer) = writer {
         let _ = send_worker_control(&writer, &worker_control_from_host(host));
+        if force_full_resync {
+            broadcast(&shared, &ServerMessage::ResetUi);
+            let _ = request_worker_full_resync(&writer);
+        }
     }
 }
 

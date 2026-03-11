@@ -69,6 +69,11 @@ where
         self.inner.dirty.store(true, Ordering::Relaxed);
     }
 
+    pub fn request_full_resync(&self) {
+        self.inner.vdom.lock().unwrap().request_full_resync();
+        self.request_repaint();
+    }
+
     pub fn set_host_size(&self, host_size: HostSize) {
         let mut current = self.inner.host_size.lock().unwrap();
         if *current != host_size {
@@ -443,6 +448,22 @@ mod tests {
         let snapshot = counts.lock().unwrap().clone();
         assert_eq!(snapshot.apply_mutations, 1);
         assert_eq!(snapshot.flushes, 1);
+    }
+
+    #[test]
+    fn full_resync_forces_new_batch_without_tree_changes() {
+        let (backend, counts) = TestBackend::new();
+        let app = App::new_with_host_size(backend, HostSize::new(390.0, 844.0), || node("Root"));
+
+        app.repaint();
+        app.request_full_resync();
+        app.tick();
+
+        let snapshot = counts.lock().unwrap().clone();
+        assert_eq!(snapshot.apply_mutations, 2);
+        assert_eq!(snapshot.apply_layout, 2);
+        assert_eq!(snapshot.flushes, 2);
+        assert_eq!(snapshot.last_layout_count, 1);
     }
 
     #[test]

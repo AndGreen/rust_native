@@ -25,6 +25,7 @@ pub enum WorkerControlMessage {
     SetHostMetrics { host: HostMetrics },
     UiEvent(UiEvent),
     RequestRepaint,
+    RequestFullResync,
     Shutdown,
 }
 

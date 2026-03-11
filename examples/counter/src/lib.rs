@@ -25,10 +25,9 @@ where
             let decrement = set_count.clone();
             let increment = set_count.clone();
             let _keep_alive = &interval;
-            
             ui! {
                 SafeArea {
-                    VStack(spacing = 12.0, padding = 16.0) {
+                    VStack(spacing = 12.0, padding = 16.0, alignment = Alignment::Center).background(Color::hex_or_black("#FAF6F1")) {
                         Text(format!("Count: {}", current))
                             .font(Font::bold(24.0))
                             .color(Color::primary())
@@ -55,6 +54,7 @@ where
                 }
             }
         }
+         
     })
 }
 
