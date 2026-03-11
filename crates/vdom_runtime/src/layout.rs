@@ -149,8 +149,10 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
         };
     }
 
-    let resolved_padding = if matches!(node.descriptor, NodeDescriptor::Element(ElementKind::SafeArea))
-    {
+    let resolved_padding = if matches!(
+        node.descriptor,
+        NodeDescriptor::Element(ElementKind::SafeArea)
+    ) {
         props
             .safe_area_edges
             .unwrap_or(SafeAreaEdges::TopBottom)
@@ -165,7 +167,10 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
         top: points(resolved_padding.top),
         bottom: points(resolved_padding.bottom),
     };
-    if !matches!(node.descriptor, NodeDescriptor::Element(ElementKind::SafeArea)) {
+    if !matches!(
+        node.descriptor,
+        NodeDescriptor::Element(ElementKind::SafeArea)
+    ) {
         style.align_items = Some(map_alignment(props.alignment));
     }
 

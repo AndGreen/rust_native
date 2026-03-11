@@ -62,6 +62,9 @@ mod tests {
 
     #[test]
     fn safe_area_allows_edge_override() {
-        assert_eq!(SafeArea::new().edges(SafeAreaEdges::All).edges_value(), SafeAreaEdges::All);
+        assert_eq!(
+            SafeArea::new().edges(SafeAreaEdges::All).edges_value(),
+            SafeAreaEdges::All
+        );
     }
 }

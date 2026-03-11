@@ -1,0 +1,22 @@
+name: iOS Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install iOS simulator target
+        run: rustup target add aarch64-apple-ios-sim
+      - name: Build counter staticlib
+        run: cargo build -p counter --target aarch64-apple-ios-sim
+      - name: Build album_list staticlib
+        run: cargo build -p album_list --target aarch64-apple-ios-sim

@@ -292,19 +292,17 @@ mod tests {
             844.0,
             native_schema::EdgeInsets::new(59.0, 0.0, 34.0, 0.0),
         );
-        let view = SafeArea().with_children(vec![
-            VStack()
-                .spacing(12.0)
-                .padding(16.0)
-                .with_children(vec![
-                    Text("Count: 2").font(Font::bold(24.0)).into_view(),
-                    HStack()
-                        .spacing(8.0)
-                        .with_children(vec![Button("-").into_view(), Button("+").into_view()])
-                        .into_view(),
-                ])
-                .into_view(),
-        ]);
+        let view = SafeArea().with_children(vec![VStack()
+            .spacing(12.0)
+            .padding(16.0)
+            .with_children(vec![
+                Text("Count: 2").font(Font::bold(24.0)).into_view(),
+                HStack()
+                    .spacing(8.0)
+                    .with_children(vec![Button("-").into_view(), Button("+").into_view()])
+                    .into_view(),
+            ])
+            .into_view()]);
 
         let batch = runtime.render(&view, host);
 

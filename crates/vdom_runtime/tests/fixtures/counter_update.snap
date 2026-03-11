@@ -1,0 +1,5 @@
+snapshot: counter_update
+protocol: V1
+mutations:
+  SetText id=3 text="Count: 1"
+layout:

@@ -1,0 +1,61 @@
+snapshot: album_list_append_item
+protocol: V1
+mutations:
+  CreateNode id=23 kind=Stack
+  SetProp id=23 key=Axis value=Axis(Horizontal)
+  SetProp id=23 key=Spacing value=12.0
+  SetProp id=23 key=Padding value=Insets(top=8.0, right=8.0, bottom=8.0, left=8.0)
+  SetProp id=23 key=Alignment value=Alignment(Center)
+  CreateNode id=24 kind=Image
+  SetProp id=24 key=Source value="northern_lights.jpg"
+  SetProp id=24 key=Width value=Dimension(Points(60.0))
+  SetProp id=24 key=Height value=Dimension(Points(60.0))
+  SetProp id=24 key=CornerRadius value=8.0
+  InsertChild parent=23 child=24 index=0
+  CreateNode id=25 kind=Stack
+  SetProp id=25 key=Axis value=Axis(Vertical)
+  SetProp id=25 key=Spacing value=8.0
+  SetProp id=25 key=Padding value=Insets(top=0.0, right=0.0, bottom=0.0, left=0.0)
+  SetProp id=25 key=Alignment value=Alignment(Leading)
+  CreateTextNode id=26 text="Northern Lights"
+  SetProp id=26 key=FontSize value=18.0
+  SetProp id=26 key=FontWeight value=FontWeight(SemiBold)
+  InsertChild parent=25 child=26 index=0
+  CreateTextNode id=27 text="Static Bloom"
+  SetProp id=27 key=Color value=Color(r=0.4, g=0.4, b=0.5, a=1.0)
+  InsertChild parent=25 child=27 index=1
+  InsertChild parent=23 child=25 index=1
+  CreateNode id=28 kind=Button
+  SetText id=28 text="Like"
+  AttachEventListener id=28 event=Tap
+  InsertChild parent=23 child=28 index=2
+  InsertChild parent=4 child=23 index=3
+layout:
+  LayoutFrame id=1 x=0.0 y=0.0 width=390.0 height=844.0
+  LayoutFrame id=2 x=0.0 y=0.0 width=390.0 height=406.0
+  LayoutFrame id=3 x=137.0 y=24.0 width=116.0 height=38.0
+  LayoutFrame id=4 x=31.0 y=78.0 width=328.0 height=304.0
+  LayoutFrame id=5 x=0.0 y=0.0 width=295.0 height=76.0
+  LayoutFrame id=6 x=8.0 y=8.0 width=60.0 height=60.0
+  LayoutFrame id=7 x=80.0 y=15.0 width=130.0 height=47.0
+  LayoutFrame id=8 x=0.0 y=0.0 width=130.0 height=22.0
+  LayoutFrame id=9 x=0.0 y=30.0 width=126.0 height=17.0
+  LayoutFrame id=10 x=222.0 y=20.0 width=65.0 height=37.0
+  LayoutFrame id=11 x=0.0 y=76.0 width=306.0 height=76.0
+  LayoutFrame id=12 x=8.0 y=8.0 width=60.0 height=60.0
+  LayoutFrame id=13 x=80.0 y=15.0 width=141.0 height=47.0
+  LayoutFrame id=14 x=0.0 y=0.0 width=141.0 height=22.0
+  LayoutFrame id=15 x=0.0 y=30.0 width=76.0 height=17.0
+  LayoutFrame id=16 x=232.0 y=20.0 width=65.0 height=37.0
+  LayoutFrame id=17 x=0.0 y=152.0 width=285.0 height=76.0
+  LayoutFrame id=18 x=8.0 y=8.0 width=60.0 height=60.0
+  LayoutFrame id=19 x=80.0 y=15.0 width=119.0 height=47.0
+  LayoutFrame id=20 x=0.0 y=0.0 width=119.0 height=22.0
+  LayoutFrame id=21 x=0.0 y=30.0 width=67.0 height=17.0
+  LayoutFrame id=22 x=211.0 y=20.0 width=66.0 height=37.0
+  LayoutFrame id=23 x=0.0 y=228.0 width=328.0 height=76.0
+  LayoutFrame id=24 x=8.0 y=8.0 width=60.0 height=60.0
+  LayoutFrame id=25 x=80.0 y=15.0 width=162.0 height=47.0
+  LayoutFrame id=26 x=0.0 y=0.0 width=162.0 height=22.0
+  LayoutFrame id=27 x=0.0 y=30.0 width=101.0 height=17.0
+  LayoutFrame id=28 x=254.0 y=20.0 width=66.0 height=37.0

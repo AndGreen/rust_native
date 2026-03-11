@@ -1,0 +1,16 @@
+name: Nightly Perf
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run ignored perf harness
+        run: cargo test -p vdom_runtime --test perf_harness -- --ignored --nocapture

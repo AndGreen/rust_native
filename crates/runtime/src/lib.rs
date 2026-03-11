@@ -316,8 +316,8 @@ mod tests {
     use super::*;
     use backend_api::Backend;
     use mf_core::view::WidgetElement;
-    use mf_core::{IntoView, WithChildren};
     use mf_core::View;
+    use mf_core::{IntoView, WithChildren};
     use mf_widgets::{Button, SafeArea, Text};
 
     #[derive(Default, Clone)]

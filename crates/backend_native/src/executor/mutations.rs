@@ -343,7 +343,10 @@ where
 }
 
 fn accepts_children(kind: ElementKind) -> bool {
-    matches!(kind, ElementKind::Stack | ElementKind::SafeArea | ElementKind::List)
+    matches!(
+        kind,
+        ElementKind::Stack | ElementKind::SafeArea | ElementKind::List
+    )
 }
 
 fn supports_text(kind: ElementKind) -> bool {
