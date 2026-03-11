@@ -8,6 +8,7 @@ pub enum Alignment {
     Leading,
     Center,
     Trailing,
+    Stretch,
 }
 
 #[derive(Clone)]
@@ -29,7 +30,7 @@ impl VStack {
         Self {
             spacing: 8.0,
             padding: 0.0,
-            alignment: Alignment::Center,
+            alignment: Alignment::Stretch,
             background: None,
         }
     }
@@ -193,6 +194,30 @@ impl WidgetElement for StackElement {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vstack_defaults_to_stretch_alignment() {
+        let view = VStack::new().with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert!(matches!(stack.alignment(), Alignment::Stretch));
+    }
+
+    #[test]
+    fn hstack_keeps_center_alignment_by_default() {
+        let view = HStack::new().with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert!(matches!(stack.alignment(), Alignment::Center));
+    }
 
     #[test]
     fn vstack_background_builder_preserves_color() {

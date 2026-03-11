@@ -28,6 +28,7 @@ pub enum Alignment {
     Leading,
     Center,
     Trailing,
+    Stretch,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

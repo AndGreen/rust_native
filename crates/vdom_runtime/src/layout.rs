@@ -264,6 +264,7 @@ fn map_alignment(alignment: Alignment) -> AlignItems {
         Alignment::Leading => AlignItems::Start,
         Alignment::Center => AlignItems::Center,
         Alignment::Trailing => AlignItems::End,
+        Alignment::Stretch => AlignItems::Stretch,
     }
 }
 
@@ -352,7 +353,7 @@ fn count_nodes(node: &CanonicalNode) -> usize {
 #[cfg(test)]
 mod tests {
     use mf_core::{IntoView, WithChildren};
-    use mf_widgets::{Alignment, Input, VStack};
+    use mf_widgets::{Alignment, HStack, Input, VStack};
     use native_schema::{ElementKind, LayoutFrame};
 
     use super::{compute_layout_frames, validate_layout_frames};
@@ -414,5 +415,45 @@ mod tests {
         assert_eq!(input.x, 24.0);
         assert_eq!(input.width, parent.width - 48.0);
         assert!(input.height >= 44.0);
+    }
+
+    #[test]
+    fn vstack_default_stretches_child_stack_to_content_width() {
+        let child = HStack().with_children(Vec::new()).into_view();
+        let view = VStack()
+            .padding(24.0)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
+        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+
+        assert_eq!(child.x, 24.0);
+        assert_eq!(child.width, parent.width - 48.0);
+    }
+
+    #[test]
+    fn hstack_default_alignment_does_not_stretch_children_vertically() {
+        let child = VStack().with_children(Vec::new()).into_view();
+        let view = HStack()
+            .padding(24.0)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
+        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+
+        assert_eq!(child.y, (parent.height - 48.0 - child.height) / 2.0 + 24.0);
+        assert_eq!(child.height, 0.0);
     }
 }

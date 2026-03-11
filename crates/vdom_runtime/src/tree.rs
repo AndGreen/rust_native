@@ -381,6 +381,7 @@ fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
                 WidgetAlignment::Leading => Alignment::Leading,
                 WidgetAlignment::Center => Alignment::Center,
                 WidgetAlignment::Trailing => Alignment::Trailing,
+                WidgetAlignment::Stretch => Alignment::Stretch,
             }),
         ),
     ];
@@ -417,7 +418,7 @@ fn list_props() -> Vec<(PropKey, PropValue)> {
 mod tests {
     use super::*;
     use mf_core::WithChildren;
-    use mf_widgets::{Button, Color, HStack, Input};
+    use mf_widgets::{Button, Color, HStack, Input, VStack};
 
     #[test]
     fn button_props_include_visual_style_and_enabled_state() {
@@ -473,6 +474,23 @@ mod tests {
         assert!(props.contains(&(
             PropKey::BackgroundColor,
             PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7)),
+        )));
+    }
+
+    #[test]
+    fn vstack_default_alignment_serializes_as_stretch() {
+        let view = VStack::new().with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        let props = stack_props(stack);
+
+        assert!(props.contains(&(
+            PropKey::Alignment,
+            PropValue::Alignment(Alignment::Stretch),
         )));
     }
 }

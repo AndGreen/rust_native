@@ -7,7 +7,7 @@ mutations:
   SetProp id=2 key=Axis value=Axis(Vertical)
   SetProp id=2 key=Spacing value=12.0
   SetProp id=2 key=Padding value=Insets(top=16.0, right=16.0, bottom=16.0, left=16.0)
-  SetProp id=2 key=Alignment value=Alignment(Center)
+  SetProp id=2 key=Alignment value=Alignment(Stretch)
   CreateTextNode id=3 text="Count: 0"
   SetProp id=3 key=Color value=Color(r=0.1, g=0.1, b=0.1, a=1.0)
   SetProp id=3 key=FontSize value=24.0
@@ -37,7 +37,7 @@ mutations:
 layout:
   LayoutFrame id=1 x=0.0 y=0.0 width=390.0 height=844.0
   LayoutFrame id=2 x=0.0 y=0.0 width=390.0 height=110.0
-  LayoutFrame id=3 x=137.0 y=16.0 width=116.0 height=29.0
-  LayoutFrame id=4 x=151.0 y=57.0 width=88.0 height=37.0
+  LayoutFrame id=3 x=16.0 y=16.0 width=115.0 height=29.0
+  LayoutFrame id=4 x=16.0 y=57.0 width=358.0 height=37.0
   LayoutFrame id=5 x=0.0 y=0.0 width=40.0 height=37.0
-  LayoutFrame id=6 x=48.0 y=0.0 width=40.0 height=37.0
+  LayoutFrame id=6 x=48.0 y=0.0 width=41.0 height=37.0

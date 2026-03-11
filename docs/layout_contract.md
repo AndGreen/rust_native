@@ -31,7 +31,7 @@ pub struct LayoutFrame {
 1. `axis`: horizontal or vertical.
 2. `spacing`: gap between direct children.
 3. `padding`: uniform or directional.
-4. `alignment`: leading, center, trailing.
+4. `alignment`: leading, center, trailing, stretch.
 5. `width` and `height`: fixed or auto.
 6. `min_width`, `min_height`, `max_width`, `max_height`.
 7. `flex_grow`, `flex_shrink`.
@@ -40,7 +40,7 @@ pub struct LayoutFrame {
 1. `axis = vertical` for stacks/lists.
 2. `spacing = 0`.
 3. `padding = 0`.
-4. `alignment = leading`.
+4. `alignment = stretch` for `VStack`, `alignment = center` for `HStack`, `alignment = leading` for `List`.
 5. `width/height = auto`.
 
 ## 7. Native Mapping
@@ -77,4 +77,3 @@ Fallback behavior:
 2. Nested stacks with mixed axis.
 3. Dynamic list insert/remove and frame stability.
 4. Text update with unchanged structure and expected frame changes.
-
