@@ -37,7 +37,7 @@ mutations:
 layout:
   LayoutFrame id=1 x=0.0 y=0.0 width=390.0 height=844.0
   LayoutFrame id=2 x=0.0 y=0.0 width=390.0 height=110.0
-  LayoutFrame id=3 x=16.0 y=16.0 width=115.0 height=29.0
+  LayoutFrame id=3 x=16.0 y=16.0 width=358.0 height=29.0
   LayoutFrame id=4 x=16.0 y=57.0 width=358.0 height=37.0
   LayoutFrame id=5 x=0.0 y=0.0 width=40.0 height=37.0
   LayoutFrame id=6 x=48.0 y=0.0 width=41.0 height=37.0

@@ -109,7 +109,7 @@ mutations:
 layout:
   LayoutFrame id=1 x=0.0 y=0.0 width=390.0 height=844.0
   LayoutFrame id=2 x=0.0 y=0.0 width=390.0 height=330.0
-  LayoutFrame id=3 x=24.0 y=24.0 width=115.0 height=38.0
+  LayoutFrame id=3 x=24.0 y=24.0 width=342.0 height=38.0
   LayoutFrame id=4 x=24.0 y=78.0 width=342.0 height=228.0
   LayoutFrame id=5 x=0.0 y=0.0 width=295.0 height=76.0
   LayoutFrame id=6 x=8.0 y=8.0 width=60.0 height=60.0

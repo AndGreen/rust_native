@@ -99,9 +99,15 @@ impl LayoutProps {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct ParentLayoutContext {
+    axis: Axis,
+    alignment: Alignment,
+}
+
 pub(crate) fn compute_layout_frames(root: &CanonicalNode, host_size: HostSize) -> Vec<LayoutFrame> {
     let mut taffy = Taffy::new();
-    let root_node = build_taffy_tree(&mut taffy, root, host_size, true);
+    let root_node = build_taffy_tree(&mut taffy, root, host_size, true, None);
     taffy
         .compute_layout(
             root_node,
@@ -123,13 +129,26 @@ fn build_taffy_tree(
     node: &CanonicalNode,
     host_size: HostSize,
     is_root: bool,
+    parent_context: Option<ParentLayoutContext>,
 ) -> Node {
+    let props = LayoutProps::for_node(node);
+    let next_parent_context = match node.descriptor {
+        NodeDescriptor::Element(ElementKind::Stack)
+        | NodeDescriptor::Element(ElementKind::SafeArea)
+        | NodeDescriptor::Element(ElementKind::List) => Some(ParentLayoutContext {
+            axis: props.axis,
+            alignment: props.alignment,
+        }),
+        _ => None,
+    };
     let children: Vec<Node> = node
         .children
         .iter()
-        .map(|child| build_taffy_tree(taffy, child, host_size, false))
+        .map(|child| {
+            build_taffy_tree(taffy, child, host_size, false, next_parent_context)
+        })
         .collect();
-    let style = style_for_node(node, host_size, is_root);
+    let style = style_for_node(node, &props, host_size, is_root, parent_context);
 
     if children.is_empty() {
         taffy.new_leaf(style).expect("leaf node should be created")
@@ -140,8 +159,13 @@ fn build_taffy_tree(
     }
 }
 
-fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> Style {
-    let props = LayoutProps::for_node(node);
+fn style_for_node(
+    node: &CanonicalNode,
+    props: &LayoutProps,
+    host_size: HostSize,
+    is_root: bool,
+    parent_context: Option<ParentLayoutContext>,
+) -> Style {
     let mut style = Style::DEFAULT.clone();
 
     if is_root {
@@ -222,27 +246,54 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
         }
         NodeDescriptor::Text => {
             let (width, height) = intrinsic_text_size(node);
-            style.size = Size {
-                width: points(if is_root { host_size.width } else { width }),
-                height: points(if is_root { host_size.height } else { height }),
-            };
+            if is_root {
+                style.size = Size {
+                    width: points(host_size.width),
+                    height: points(host_size.height),
+                };
+            } else {
+                if props.width.is_none() && !text_should_fill_parent_width(parent_context) {
+                    style.size.width = points(width);
+                }
+                if props.height.is_none() {
+                    style.size.height = points(height);
+                }
+            }
         }
         NodeDescriptor::Element(ElementKind::Button) => {
             let (width, height) = intrinsic_button_size(node);
-            style.size = Size {
-                width: points(if is_root { host_size.width } else { width }),
-                height: points(if is_root { host_size.height } else { height }),
-            };
+            if is_root {
+                style.size = Size {
+                    width: points(host_size.width),
+                    height: points(host_size.height),
+                };
+            } else {
+                if props.width.is_none() {
+                    style.size.width = points(width);
+                }
+                if props.height.is_none() {
+                    style.size.height = points(height);
+                }
+            }
         }
         NodeDescriptor::Element(ElementKind::Image) => {
-            let (width, height) = intrinsic_image_size(&props);
-            style.size = Size {
-                width: points(if is_root { host_size.width } else { width }),
-                height: points(if is_root { host_size.height } else { height }),
-            };
+            let (width, height) = intrinsic_image_size(props);
+            if is_root {
+                style.size = Size {
+                    width: points(host_size.width),
+                    height: points(host_size.height),
+                };
+            } else {
+                if props.width.is_none() {
+                    style.size.width = points(width);
+                }
+                if props.height.is_none() {
+                    style.size.height = points(height);
+                }
+            }
         }
         NodeDescriptor::Element(ElementKind::Input) => {
-            let height = intrinsic_input_height(node, &props);
+            let height = intrinsic_input_height(node, props);
             if is_root {
                 style.size.width = points(host_size.width);
             } else if let Some(width) = props.width {
@@ -257,6 +308,16 @@ fn style_for_node(node: &CanonicalNode, host_size: HostSize, is_root: bool) -> S
     }
 
     style
+}
+
+fn text_should_fill_parent_width(parent_context: Option<ParentLayoutContext>) -> bool {
+    matches!(
+        parent_context,
+        Some(ParentLayoutContext {
+            axis: Axis::Vertical,
+            alignment: Alignment::Stretch,
+        })
+    )
 }
 
 fn map_alignment(alignment: Alignment) -> AlignItems {
@@ -353,7 +414,7 @@ fn count_nodes(node: &CanonicalNode) -> usize {
 #[cfg(test)]
 mod tests {
     use mf_core::{IntoView, WithChildren};
-    use mf_widgets::{Alignment, HStack, Input, VStack};
+    use mf_widgets::{Alignment, HStack, Input, Text, VStack};
     use native_schema::{ElementKind, LayoutFrame};
 
     use super::{compute_layout_frames, validate_layout_frames};
@@ -455,5 +516,69 @@ mod tests {
 
         assert_eq!(child.y, (parent.height - 48.0 - child.height) / 2.0 + 24.0);
         assert_eq!(child.height, 0.0);
+    }
+
+    #[test]
+    fn text_in_default_vstack_fills_parent_content_width() {
+        let child = Text("Name").into_view();
+        let view = VStack()
+            .padding(24.0)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
+        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+
+        assert_eq!(text.x, 24.0);
+        assert_eq!(text.width, parent.width - 48.0);
+        assert!(text.height > 0.0);
+    }
+
+    #[test]
+    fn text_in_leading_vstack_keeps_intrinsic_width() {
+        let child = Text("Name").into_view();
+        let view = VStack()
+            .padding(24.0)
+            .alignment(Alignment::Leading)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+
+        assert_eq!(text.x, 24.0);
+        assert!(text.width > 0.0);
+        assert!(text.width < 100.0);
+    }
+
+    #[test]
+    fn text_in_hstack_keeps_intrinsic_width() {
+        let child = Text("Name").into_view();
+        let view = HStack()
+            .padding(24.0)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
+        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+
+        assert!(text.y > 24.0);
+        assert!(text.y < parent.height - 24.0);
+        assert!(text.width > 0.0);
+        assert!(text.width < 100.0);
     }
 }

@@ -202,15 +202,22 @@ pub(super) fn apply_font(
     };
 
     unsafe {
-        let font: *mut Object = match weight {
-            FontWeight::Regular => msg_send![class!(UIFont), systemFontOfSize: size],
-            FontWeight::SemiBold | FontWeight::Bold => {
-                msg_send![class!(UIFont), boldSystemFontOfSize: size]
-            }
-        };
+        let font: *mut Object = msg_send![
+            class!(UIFont),
+            systemFontOfSize: size
+            weight: ios_font_weight_value(weight)
+        ];
         let _: () = msg_send![handle, setFont: font];
     }
     Ok(())
+}
+
+fn ios_font_weight_value(weight: FontWeight) -> f64 {
+    match weight {
+        FontWeight::Regular => 0.0,
+        FontWeight::SemiBold => 0.3,
+        FontWeight::Bold => 0.4,
+    }
 }
 
 pub(super) fn apply_corner_radius(handle: *mut Object, value: Option<&PropValue>) {
@@ -356,5 +363,18 @@ impl CGRect {
             origin: CGPoint { x, y },
             size: CGSize { width, height },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ios_font_weight_value;
+    use native_schema::FontWeight;
+
+    #[test]
+    fn ios_font_mapping_uses_distinct_semibold_weight() {
+        assert_eq!(ios_font_weight_value(FontWeight::Regular), 0.0);
+        assert_eq!(ios_font_weight_value(FontWeight::SemiBold), 0.3);
+        assert_eq!(ios_font_weight_value(FontWeight::Bold), 0.4);
     }
 }
