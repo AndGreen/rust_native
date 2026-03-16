@@ -34,38 +34,45 @@ where
                         Text("Profile Form").font(Font::bold(28.0)).color(Color::primary())
                         Text("Controlled inputs with Rust-owned focus state")
                             .foreground(Color::secondary())
-                        VStack(spacing = 12.0)
-                            .background(Color::hex_or_black("#F6F0EB")) {
-                            Text("Name").font(Font::semibold(16.0))
-                            Input(current_name.clone())
-                                .font(Font::regular(18.0))
-                                .foreground(Color::primary())
-                                .background(Color::hex_or_black("#F3ECE7"))
-                                .corner_radius(12.0)
-                                .focused(focus == "name")
-                                .on_input(move |value| {
-                                    set_name_value.set(value);
-                                })
-                                .on_focus_change(move |focused| {
-                                    if focused {
-                                        set_focus_name.set("name".to_string());
-                                    }
-                                })
-                            Text("Email").font(Font::semibold(16.0))
-                            Input(current_email.clone())
-                                .font(Font::regular(18.0))
-                                .foreground(Color::primary())
-                                .background(Color::hex_or_black("#F3ECE7"))
-                                .corner_radius(12.0)
-                                .focused(focus == "email")
-                                .on_input(move |value| {
-                                    set_email_value.set(value);
-                                })
-                                .on_focus_change(move |focused| {
-                                    if focused {
-                                        set_focus_email.set("email".to_string());
-                                    }
-                                })
+                        Container(
+                            padding = 16.0,
+                            background = Color::hex_or_black("#F6F0EB"),
+                            corner_radius = 22.0,
+                        )
+                            .border(1.0, Color::hex_or_black("#E7DCCF"))
+                            .shadow(Color::hex_or_black("#1C130A").with_alpha(0.10), 12.0, 0.0, 6.0) {
+                            VStack(spacing = 12.0) {
+                                Text("Name").font(Font::semibold(16.0))
+                                Input(current_name.clone())
+                                    .font(Font::regular(18.0))
+                                    .foreground(Color::primary())
+                                    .background(Color::hex_or_black("#F3ECE7"))
+                                    .corner_radius(12.0)
+                                    .focused(focus == "name")
+                                    .on_input(move |value| {
+                                        set_name_value.set(value);
+                                    })
+                                    .on_focus_change(move |focused| {
+                                        if focused {
+                                            set_focus_name.set("name".to_string());
+                                        }
+                                    })
+                                Text("Email").font(Font::semibold(16.0))
+                                Input(current_email.clone())
+                                    .font(Font::regular(18.0))
+                                    .foreground(Color::primary())
+                                    .background(Color::hex_or_black("#F3ECE7"))
+                                    .corner_radius(12.0)
+                                    .focused(focus == "email")
+                                    .on_input(move |value| {
+                                        set_email_value.set(value);
+                                    })
+                                    .on_focus_change(move |focused| {
+                                        if focused {
+                                            set_focus_email.set("email".to_string());
+                                        }
+                                    })
+                            }
                         }
                         HStack(spacing = 12.0) {
                             Button("Focus Email")
@@ -84,6 +91,35 @@ where
                                         "submit form_demo name={submit_name:?} email={submit_email:?}"
                                     );
                                 })
+                        }
+                        VStack(spacing = 10.0, alignment = Alignment::Leading) {
+                            Text("Container Preview")
+                                .font(Font::semibold(16.0))
+                                .foreground(Color::secondary())
+                            HStack(spacing = 12.0, alignment = Alignment::Center) {
+                                Container(
+                                    width = 16.0,
+                                    height = 16.0,
+                                    background = Color::hex_or_black("#248C61"),
+                                    full_round = true,
+                                )
+                                Container(
+                                    padding_insets = EdgeInsets::new(8.0, 12.0, 8.0, 12.0),
+                                    background = Color::hex_or_black("#EADFCF"),
+                                )
+                                    .corner_radius_per_corner(14.0, 4.0, 14.0, 4.0)
+                                    .offset(0.0, -1.0) {
+                                    Text("Preview")
+                                        .font(Font::semibold(14.0))
+                                        .foreground(Color::primary())
+                                }
+                                Container(
+                                    width = 44.0,
+                                    height = 44.0,
+                                    full_round = true,
+                                )
+                                    .border(2.0, Color::hex_or_black("#2B6CB0"))
+                            }
                         }
                     }
                 }

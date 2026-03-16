@@ -88,6 +88,16 @@ impl PlatformAdapter for MockAdapter {
         Ok(())
     }
 
+    fn unset_prop(
+        &mut self,
+        _kind: ElementKind,
+        _handle: Self::Handle,
+        _props: &HashMap<PropKey, PropValue>,
+        _key: PropKey,
+    ) -> Result<(), BackendError> {
+        Ok(())
+    }
+
     fn attach_listener(
         &mut self,
         _kind: ElementKind,
@@ -103,7 +113,9 @@ impl PlatformAdapter for MockAdapter {
 
     fn apply_frame(
         &mut self,
+        _kind: ElementKind,
         _handle: Self::Handle,
+        _props: &HashMap<PropKey, PropValue>,
         _frame: LayoutFrame,
     ) -> Result<(), BackendError> {
         Ok(())
@@ -228,6 +240,35 @@ fn set_text_rejects_non_text_nodes() {
     );
 
     assert!(matches!(result, Err(BackendError::BatchRejected(_))));
+}
+
+#[test]
+fn unset_prop_removes_value_from_executor_state() {
+    let mut state = ExecutorState::default();
+    let mut adapter = MockAdapter::default();
+
+    state
+        .apply_mutations(
+            &mut adapter,
+            &[
+                Mutation::CreateNode {
+                    id: 1,
+                    kind: ElementKind::Container,
+                },
+                Mutation::SetProp {
+                    id: 1,
+                    key: PropKey::Opacity,
+                    value: PropValue::Float(0.8),
+                },
+                Mutation::UnsetProp {
+                    id: 1,
+                    key: PropKey::Opacity,
+                },
+            ],
+        )
+        .unwrap();
+
+    assert!(!state.node(1).unwrap().props.contains_key(&PropKey::Opacity));
 }
 
 #[test]

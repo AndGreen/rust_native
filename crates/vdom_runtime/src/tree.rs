@@ -5,6 +5,7 @@ use indexmap::IndexMap;
 use mf_core::{Fragment, View};
 use mf_widgets::button::ButtonAction;
 use mf_widgets::button::ButtonView;
+use mf_widgets::container::Container;
 use mf_widgets::image::ImageView;
 use mf_widgets::input::{FocusChangeAction, InputAction, InputView};
 use mf_widgets::layout::{Alignment as WidgetAlignment, Axis as WidgetAxis, StackElement};
@@ -45,6 +46,8 @@ impl NodeDescriptor {
             Self::Element(ElementKind::Image)
         } else if view.element().as_any().is::<InputView>() {
             Self::Element(ElementKind::Input)
+        } else if view.element().as_any().is::<Container>() {
+            Self::Element(ElementKind::Container)
         } else if view.element().as_any().is::<SafeArea>() {
             Self::Element(ElementKind::SafeArea)
         } else if view.element().as_any().is::<StackElement>() {
@@ -113,6 +116,19 @@ pub(crate) fn canonicalize_view(
             tap_handler: None,
             input_handler: input.input_action().map(Arc::clone),
             focus_change_handler: input.focus_change_action().map(Arc::clone),
+            children,
+        };
+    }
+
+    if let Some(container) = view.element().as_any().downcast_ref::<Container>() {
+        return CanonicalNode {
+            id,
+            descriptor: NodeDescriptor::Element(ElementKind::Container),
+            props: container_props(container),
+            text: None,
+            tap_handler: None,
+            input_handler: None,
+            focus_change_handler: None,
             children,
         };
     }
@@ -326,6 +342,78 @@ fn image_props(image: &ImageView) -> PropMap {
     props
 }
 
+fn container_props(container: &Container) -> PropMap {
+    let mut props = PropMap::new();
+    props.insert(
+        PropKey::Padding,
+        PropValue::Insets(container.padding_value()),
+    );
+    if let Some(width) = container.width_value() {
+        props.insert(
+            PropKey::Width,
+            PropValue::Dimension(DimensionValue::Points(width)),
+        );
+    }
+    if let Some(height) = container.height_value() {
+        props.insert(
+            PropKey::Height,
+            PropValue::Dimension(DimensionValue::Points(height)),
+        );
+    }
+    if let Some(min_width) = container.min_width_value() {
+        props.insert(
+            PropKey::MinWidth,
+            PropValue::Dimension(DimensionValue::Points(min_width)),
+        );
+    }
+    if let Some(min_height) = container.min_height_value() {
+        props.insert(
+            PropKey::MinHeight,
+            PropValue::Dimension(DimensionValue::Points(min_height)),
+        );
+    }
+    if let Some(max_width) = container.max_width_value() {
+        props.insert(
+            PropKey::MaxWidth,
+            PropValue::Dimension(DimensionValue::Points(max_width)),
+        );
+    }
+    if let Some(max_height) = container.max_height_value() {
+        props.insert(
+            PropKey::MaxHeight,
+            PropValue::Dimension(DimensionValue::Points(max_height)),
+        );
+    }
+    if let Some(color) = container.background_value() {
+        props.insert(PropKey::BackgroundColor, PropValue::Color((*color).into()));
+    }
+    if let Some(opacity) = container.opacity_value() {
+        props.insert(PropKey::Opacity, PropValue::Float(opacity));
+    }
+    if let Some(border) = container.border_value() {
+        props.insert(PropKey::Border, PropValue::LineStyle(border));
+    }
+    if let Some(stroke) = container.stroke_value() {
+        props.insert(PropKey::Stroke, PropValue::LineStyle(stroke));
+    }
+    if let Some(radius) = container.corner_radius_value() {
+        props.insert(PropKey::CornerRadius, PropValue::Float(radius));
+    }
+    if let Some(radii) = container.corner_radii_value() {
+        props.insert(PropKey::CornerRadii, PropValue::CornerRadii(radii));
+    }
+    if container.full_round_value() {
+        props.insert(PropKey::FullRound, PropValue::Bool(true));
+    }
+    if let Some(shadow) = container.shadow_value() {
+        props.insert(PropKey::Shadow, PropValue::Shadow(shadow));
+    }
+    if let Some(offset) = container.offset_value() {
+        props.insert(PropKey::Offset, PropValue::Point(offset));
+    }
+    props
+}
+
 fn input_props(input: &InputView) -> PropMap {
     let mut props = PropMap::new();
     if let Some(color) = input.color_value() {
@@ -373,10 +461,7 @@ fn stack_props(stack: &StackElement) -> PropMap {
         }),
     );
     props.insert(PropKey::Spacing, PropValue::Float(stack.spacing()));
-    props.insert(
-        PropKey::Padding,
-        PropValue::Insets(EdgeInsets::all(stack.padding())),
-    );
+    props.insert(PropKey::Padding, PropValue::Insets(stack.padding_value()));
     props.insert(
         PropKey::Alignment,
         PropValue::Alignment(match stack.alignment() {
@@ -427,6 +512,10 @@ fn safe_area_props(safe_area: &SafeArea) -> PropMap {
             JustifyContent::Stretch => JustifyContent::Stretch,
         }),
     );
+    props.insert(
+        PropKey::Padding,
+        PropValue::Insets(safe_area.padding_value()),
+    );
     if let Some(color) = safe_area.background_value() {
         props.insert(
             PropKey::BackgroundColor,
@@ -449,7 +538,9 @@ fn list_props() -> PropMap {
 mod tests {
     use super::*;
     use mf_core::WithChildren;
-    use mf_widgets::{Button, Color, HStack, Input, JustifyContent, SafeArea, VStack};
+    use mf_widgets::{
+        Button, Color, Container, EdgeInsets, HStack, Input, JustifyContent, SafeArea, VStack,
+    };
 
     #[test]
     fn button_props_include_visual_style_and_enabled_state() {
@@ -512,6 +603,55 @@ mod tests {
             props.get(&PropKey::BackgroundColor),
             Some(&PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7))),
         );
+    }
+
+    #[test]
+    fn container_props_include_visual_and_layout_values() {
+        let view = Container::new()
+            .padding_insets(EdgeInsets::new(1.0, 2.0, 3.0, 4.0))
+            .width(120.0)
+            .height(44.0)
+            .background(Color::new(0.2, 0.3, 0.4).with_alpha(0.7))
+            .opacity(0.8)
+            .border(2.0, Color::new(0.9, 0.8, 0.7))
+            .stroke(1.0, Color::new(0.5, 0.6, 0.7))
+            .corner_radius(12.0)
+            .corner_radius_per_corner(4.0, 6.0, 8.0, 10.0)
+            .full_round(true)
+            .shadow(Color::new(0.0, 0.0, 0.0).with_alpha(0.3), 10.0, 2.0, 4.0)
+            .offset(3.0, -1.0)
+            .with_children(Vec::new());
+        let container = view
+            .element()
+            .as_any()
+            .downcast_ref::<Container>()
+            .expect("container element");
+
+        let props = container_props(container);
+
+        assert_eq!(
+            props.get(&PropKey::Padding),
+            Some(&PropValue::Insets(EdgeInsets::new(1.0, 2.0, 3.0, 4.0)))
+        );
+        assert_eq!(
+            props.get(&PropKey::CornerRadii),
+            Some(&PropValue::CornerRadii(native_schema::CornerRadii::new(
+                4.0, 6.0, 8.0, 10.0,
+            )))
+        );
+        assert_eq!(props.get(&PropKey::FullRound), Some(&PropValue::Bool(true)));
+        assert!(matches!(
+            props.get(&PropKey::Border),
+            Some(PropValue::LineStyle(_))
+        ));
+        assert!(matches!(
+            props.get(&PropKey::Shadow),
+            Some(PropValue::Shadow(_))
+        ));
+        assert!(matches!(
+            props.get(&PropKey::Offset),
+            Some(PropValue::Point(_))
+        ));
     }
 
     #[test]

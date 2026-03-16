@@ -48,6 +48,37 @@ pub enum DimensionValue {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PointValue {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl PointValue {
+    pub const fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct CornerRadii {
+    pub top_left: f32,
+    pub top_right: f32,
+    pub bottom_right: f32,
+    pub bottom_left: f32,
+}
+
+impl CornerRadii {
+    pub const fn new(top_left: f32, top_right: f32, bottom_right: f32, bottom_left: f32) -> Self {
+        Self {
+            top_left,
+            top_right,
+            bottom_right,
+            bottom_left,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct LayoutFrame {
     pub id: UiNodeId,
     pub x: f32,
@@ -90,6 +121,24 @@ mod tests {
         assert_eq!(insets.right, 12.0);
         assert_eq!(insets.bottom, 12.0);
         assert_eq!(insets.left, 12.0);
+    }
+
+    #[test]
+    fn point_value_preserves_components() {
+        let point = PointValue::new(4.0, -8.0);
+
+        assert_eq!(point.x, 4.0);
+        assert_eq!(point.y, -8.0);
+    }
+
+    #[test]
+    fn corner_radii_preserve_each_corner() {
+        let radii = CornerRadii::new(4.0, 8.0, 12.0, 16.0);
+
+        assert_eq!(radii.top_left, 4.0);
+        assert_eq!(radii.top_right, 8.0);
+        assert_eq!(radii.bottom_right, 12.0);
+        assert_eq!(radii.bottom_left, 16.0);
     }
 
     #[test]

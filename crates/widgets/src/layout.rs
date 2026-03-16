@@ -1,6 +1,6 @@
 use mf_core::dsl::WithChildren;
 use mf_core::view::{View, WidgetElement};
-use native_schema::JustifyContent;
+use native_schema::{EdgeInsets, JustifyContent};
 
 use crate::color::Color;
 
@@ -15,7 +15,7 @@ pub enum Alignment {
 #[derive(Clone)]
 pub struct VStack {
     spacing: f32,
-    padding: f32,
+    padding: EdgeInsets,
     alignment: Alignment,
     justify_content: JustifyContent,
     background: Option<Color>,
@@ -31,7 +31,7 @@ impl VStack {
     pub fn new() -> Self {
         Self {
             spacing: 8.0,
-            padding: 0.0,
+            padding: EdgeInsets::all(0.0),
             alignment: Alignment::Stretch,
             justify_content: JustifyContent::Start,
             background: None,
@@ -44,6 +44,11 @@ impl VStack {
     }
 
     pub fn padding(mut self, padding: f32) -> Self {
+        self.padding = EdgeInsets::all(padding);
+        self
+    }
+
+    pub fn padding_insets(mut self, padding: EdgeInsets) -> Self {
         self.padding = padding;
         self
     }
@@ -83,7 +88,7 @@ impl WithChildren for VStack {
 #[derive(Clone)]
 pub struct HStack {
     spacing: f32,
-    padding: f32,
+    padding: EdgeInsets,
     alignment: Alignment,
     justify_content: JustifyContent,
     background: Option<Color>,
@@ -99,7 +104,7 @@ impl HStack {
     pub fn new() -> Self {
         Self {
             spacing: 8.0,
-            padding: 0.0,
+            padding: EdgeInsets::all(0.0),
             alignment: Alignment::Center,
             justify_content: JustifyContent::Start,
             background: None,
@@ -112,6 +117,11 @@ impl HStack {
     }
 
     pub fn padding(mut self, padding: f32) -> Self {
+        self.padding = EdgeInsets::all(padding);
+        self
+    }
+
+    pub fn padding_insets(mut self, padding: EdgeInsets) -> Self {
         self.padding = padding;
         self
     }
@@ -157,7 +167,7 @@ pub enum Axis {
 pub struct StackElement {
     axis: Axis,
     spacing: f32,
-    padding: f32,
+    padding: EdgeInsets,
     alignment: Alignment,
     justify_content: JustifyContent,
     background: Option<Color>,
@@ -172,7 +182,7 @@ impl StackElement {
         self.spacing
     }
 
-    pub fn padding(&self) -> f32 {
+    pub fn padding_value(&self) -> EdgeInsets {
         self.padding
     }
 
@@ -199,7 +209,7 @@ impl WidgetElement for StackElement {
 
     fn describe(&self) -> String {
         format!(
-            "{}(spacing: {}, padding: {}, alignment: {:?}, justify_content: {:?}, background: {:?})",
+            "{}(spacing: {}, padding: {:?}, alignment: {:?}, justify_content: {:?}, background: {:?})",
             self.name(),
             self.spacing,
             self.padding,
@@ -255,6 +265,20 @@ mod tests {
             .expect("stack element");
 
         assert_eq!(stack.background_value(), Some(&color));
+    }
+
+    #[test]
+    fn stack_padding_insets_preserve_each_side() {
+        let view = HStack::new()
+            .padding_insets(EdgeInsets::new(4.0, 8.0, 12.0, 16.0))
+            .with_children(Vec::new());
+        let stack = view
+            .element()
+            .as_any()
+            .downcast_ref::<StackElement>()
+            .expect("stack element");
+
+        assert_eq!(stack.padding_value(), EdgeInsets::new(4.0, 8.0, 12.0, 16.0));
     }
 
     #[test]

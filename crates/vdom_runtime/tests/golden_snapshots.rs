@@ -190,6 +190,7 @@ fn format_mutation(mutation: &Mutation) -> String {
                 format_prop_value(value)
             )
         }
+        Mutation::UnsetProp { id, key } => format!("UnsetProp id={id} key={key:?}"),
         Mutation::InsertChild {
             parent,
             child,
@@ -237,6 +238,38 @@ fn format_prop_value(value: &PropValue) -> String {
             format_float(insets.left)
         ),
         PropValue::Dimension(dimension) => format!("Dimension({dimension:?})"),
+        PropValue::CornerRadii(radii) => format!(
+            "CornerRadii(top_left={}, top_right={}, bottom_right={}, bottom_left={})",
+            format_float(radii.top_left),
+            format_float(radii.top_right),
+            format_float(radii.bottom_right),
+            format_float(radii.bottom_left)
+        ),
+        PropValue::LineStyle(style) => format!(
+            "LineStyle(width={}, color=({}, {}, {}, {}))",
+            format_float(style.width),
+            format_float(style.color.r),
+            format_float(style.color.g),
+            format_float(style.color.b),
+            format_float(style.color.a)
+        ),
+        PropValue::Shadow(shadow) => format!(
+            "Shadow(color=({}, {}, {}, {}), radius={}, offset=({}, {}))",
+            format_float(shadow.color.r),
+            format_float(shadow.color.g),
+            format_float(shadow.color.b),
+            format_float(shadow.color.a),
+            format_float(shadow.radius),
+            format_float(shadow.offset.x),
+            format_float(shadow.offset.y)
+        ),
+        PropValue::Point(point) => {
+            format!(
+                "Point(x={}, y={})",
+                format_float(point.x),
+                format_float(point.y)
+            )
+        }
     }
 }
 

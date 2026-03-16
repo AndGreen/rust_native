@@ -5,6 +5,7 @@ mutations:
   SetProp id=1 key=SafeAreaEdges value=SafeAreaEdges(TopBottom)
   SetProp id=1 key=Alignment value=Alignment(Center)
   SetProp id=1 key=JustifyContent value=JustifyContent(Center)
+  SetProp id=1 key=Padding value=Insets(top=0.0, right=0.0, bottom=0.0, left=0.0)
   SetProp id=1 key=BackgroundColor value=Color(r=1.0, g=1.0, b=0.9, a=1.0)
   CreateNode id=2 kind=Stack
   SetProp id=2 key=Axis value=Axis(Vertical)

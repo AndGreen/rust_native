@@ -51,7 +51,7 @@ pub(super) fn bootstrap_host() -> Result<HostViews, BackendError> {
 pub(super) fn create_plain_view() -> *mut Object {
     unsafe {
         let view: *mut Object = msg_send![class!(UIView), new];
-        let _: () = msg_send![view, setClipsToBounds: YES];
+        let _: () = msg_send![view, setClipsToBounds: NO];
         view
     }
 }
@@ -120,18 +120,29 @@ pub(super) fn apply_color(
     handle: *mut Object,
     value: Option<&PropValue>,
 ) -> Result<(), BackendError> {
-    let Some(PropValue::Color(ColorValue { r, g, b, a })) = value else {
-        eprintln!("[backend_native/ios] ignoring invalid Color prop");
-        return Ok(());
+    let color: *mut Object = match value {
+        Some(PropValue::Color(ColorValue { r, g, b, a })) => unsafe {
+            msg_send![
+                class!(UIColor),
+                colorWithRed: *r as f64
+                green: *g as f64
+                blue: *b as f64
+                alpha: *a as f64
+            ]
+        },
+        None => unsafe {
+            match kind {
+                ElementKind::Button => msg_send![class!(UIColor), systemBlueColor],
+                ElementKind::Text | ElementKind::Input => msg_send![class!(UIColor), blackColor],
+                _ => msg_send![class!(UIColor), clearColor],
+            }
+        },
+        Some(_) => {
+            eprintln!("[backend_native/ios] ignoring invalid Color prop");
+            return Ok(());
+        }
     };
     unsafe {
-        let color: *mut Object = msg_send![
-            class!(UIColor),
-            colorWithRed: *r as f64
-            green: *g as f64
-            blue: *b as f64
-            alpha: *a as f64
-        ];
         match kind {
             ElementKind::Text => {
                 let _: () = msg_send![handle, setTextColor: color];
@@ -154,21 +165,41 @@ pub(super) fn apply_background_color(
     handle: *mut Object,
     value: Option<&PropValue>,
 ) -> Result<(), BackendError> {
-    let Some(PropValue::Color(ColorValue { r, g, b, a })) = value else {
-        eprintln!("[backend_native/ios] ignoring invalid BackgroundColor prop");
-        return Ok(());
+    let color: *mut Object = match value {
+        Some(PropValue::Color(ColorValue { r, g, b, a })) => unsafe {
+            msg_send![
+                class!(UIColor),
+                colorWithRed: *r as f64
+                green: *g as f64
+                blue: *b as f64
+                alpha: *a as f64
+            ]
+        },
+        None => unsafe { msg_send![class!(UIColor), clearColor] },
+        Some(_) => {
+            eprintln!("[backend_native/ios] ignoring invalid BackgroundColor prop");
+            return Ok(());
+        }
     };
     unsafe {
-        let color: *mut Object = msg_send![
-            class!(UIColor),
-            colorWithRed: *r as f64
-            green: *g as f64
-            blue: *b as f64
-            alpha: *a as f64
-        ];
         let _: () = msg_send![handle, setBackgroundColor: color];
     }
     Ok(())
+}
+
+pub(super) fn apply_opacity(handle: *mut Object, value: Option<&PropValue>) {
+    let alpha = match value {
+        Some(PropValue::Float(value)) => *value as f64,
+        None => 1.0,
+        Some(_) => {
+            eprintln!("[backend_native/ios] ignoring invalid Opacity prop");
+            return;
+        }
+    };
+
+    unsafe {
+        let _: () = msg_send![handle, setAlpha: alpha];
+    }
 }
 
 pub(super) fn apply_font(
@@ -221,29 +252,37 @@ fn ios_font_weight_value(weight: FontWeight) -> f64 {
 }
 
 pub(super) fn apply_corner_radius(handle: *mut Object, value: Option<&PropValue>) {
-    let Some(PropValue::Float(radius)) = value else {
-        eprintln!("[backend_native/ios] ignoring invalid CornerRadius prop");
-        return;
+    let radius = match value {
+        Some(PropValue::Float(radius)) => *radius,
+        None => 0.0,
+        Some(_) => {
+            eprintln!("[backend_native/ios] ignoring invalid CornerRadius prop");
+            return;
+        }
     };
     unsafe {
         let layer: *mut Object = msg_send![handle, layer];
-        let _: () = msg_send![layer, setCornerRadius: *radius as f64];
-        let _: () = msg_send![handle, setClipsToBounds: if *radius > 0.0 { YES } else { NO }];
+        let _: () = msg_send![layer, setCornerRadius: radius as f64];
+        let _: () = msg_send![handle, setClipsToBounds: if radius > 0.0 { YES } else { NO }];
     }
 }
 
 pub(super) fn apply_enabled(handle: *mut Object, value: Option<&PropValue>) {
-    let Some(PropValue::Bool(enabled)) = value else {
-        eprintln!("[backend_native/ios] ignoring invalid Enabled prop");
-        return;
+    let enabled = match value {
+        Some(PropValue::Bool(enabled)) => *enabled,
+        None => true,
+        Some(_) => {
+            eprintln!("[backend_native/ios] ignoring invalid Enabled prop");
+            return;
+        }
     };
     unsafe {
         if responds_to(handle, sel!(setEnabled:)) {
-            let _: () = msg_send![handle, setEnabled: if *enabled { YES } else { NO }];
+            let _: () = msg_send![handle, setEnabled: if enabled { YES } else { NO }];
         } else {
             let _: () = msg_send![
                 handle,
-                setUserInteractionEnabled: if *enabled { YES } else { NO }
+                setUserInteractionEnabled: if enabled { YES } else { NO }
             ];
         }
     }
@@ -273,13 +312,18 @@ pub(super) fn apply_image_source(
     handle: *mut Object,
     value: Option<&PropValue>,
 ) -> Result<(), BackendError> {
-    let Some(PropValue::String(source)) = value else {
-        eprintln!("[backend_native/ios] ignoring invalid Source prop");
-        return Ok(());
-    };
-    let source = nsstring(source)?;
     unsafe {
-        let image: *mut Object = msg_send![class!(UIImage), imageNamed: source];
+        let image: *mut Object = match value {
+            Some(PropValue::String(source)) => {
+                let source = nsstring(source)?;
+                msg_send![class!(UIImage), imageNamed: source]
+            }
+            None => std::ptr::null_mut(),
+            Some(_) => {
+                eprintln!("[backend_native/ios] ignoring invalid Source prop");
+                return Ok(());
+            }
+        };
         let _: () = msg_send![handle, setImage: image];
     }
     Ok(())

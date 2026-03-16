@@ -202,6 +202,7 @@ fn element_kind_code(kind: ElementKind) -> u32 {
         ElementKind::Image => 4,
         ElementKind::List => 5,
         ElementKind::Input => 6,
+        ElementKind::Container => 7,
     }
 }
 
@@ -361,10 +362,11 @@ mod tests {
             element_kind_code(ElementKind::Image),
             element_kind_code(ElementKind::List),
             element_kind_code(ElementKind::Input),
+            element_kind_code(ElementKind::Container),
         ];
 
-        assert_eq!(kinds.len(), 7);
-        assert_eq!(kinds, [0, 1, 2, 3, 4, 5, 6]);
+        assert_eq!(kinds.len(), 8);
+        assert_eq!(kinds, [0, 1, 2, 3, 4, 5, 6, 7]);
         assert_eq!(event_kind_code(EventKind::Tap), 0);
         assert_eq!(event_kind_code(EventKind::TextInput), 1);
         assert_eq!(font_weight_code(FontWeight::Bold), 2);

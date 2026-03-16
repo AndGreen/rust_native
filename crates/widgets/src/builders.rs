@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 use crate::button::ButtonView;
+use crate::container::Container;
 use crate::image::ImageView;
 use crate::input::InputView;
 use crate::layout::{HStack, VStack};
@@ -14,6 +15,10 @@ pub fn Text(content: impl Into<String>) -> TextView {
 
 pub fn Button(label: impl Into<String>) -> ButtonView {
     ButtonView::new(label)
+}
+
+pub fn Container() -> Container {
+    Container::new()
 }
 
 pub fn VStack() -> VStack {

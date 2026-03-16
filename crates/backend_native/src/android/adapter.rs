@@ -197,6 +197,18 @@ where
                     Ok(())
                 }
             },
+            PropKey::Opacity
+            | PropKey::CornerRadii
+            | PropKey::FullRound
+            | PropKey::Border
+            | PropKey::Stroke
+            | PropKey::Shadow
+            | PropKey::Offset => {
+                eprintln!(
+                    "[backend_native/android] ignoring visual prop {key:?} in iOS-first slice"
+                );
+                Ok(())
+            }
             PropKey::Enabled => match props::bool_value(props, PropKey::Enabled) {
                 Some(Ok(enabled)) => self.bridge.set_enabled(handle, enabled),
                 _ => {
@@ -245,6 +257,16 @@ where
                 Ok(())
             }
         }
+    }
+
+    fn unset_prop(
+        &mut self,
+        kind: ElementKind,
+        handle: Self::Handle,
+        props: &HashMap<PropKey, PropValue>,
+        key: PropKey,
+    ) -> Result<(), BackendError> {
+        self.set_prop(kind, handle, props, key)
     }
 
     fn attach_listener(
@@ -314,7 +336,9 @@ where
 
     fn apply_frame(
         &mut self,
+        _kind: ElementKind,
         handle: Self::Handle,
+        _props: &HashMap<PropKey, PropValue>,
         frame: LayoutFrame,
     ) -> Result<(), BackendError> {
         self.bridge.apply_frame(handle, frame)
@@ -504,6 +528,7 @@ mod tests {
         props.insert(PropKey::FontSize, PropValue::Float(18.0));
         props.insert(PropKey::FontWeight, PropValue::FontWeight(FontWeight::Bold));
         props.insert(PropKey::CornerRadius, PropValue::Float(12.0));
+        props.insert(PropKey::Opacity, PropValue::Float(0.8));
         props.insert(PropKey::Enabled, PropValue::Bool(false));
         props.insert(PropKey::Focused, PropValue::Bool(true));
         props.insert(PropKey::Source, PropValue::String("cover.png".to_string()));
@@ -526,6 +551,9 @@ mod tests {
             .unwrap();
         adapter
             .set_prop(ElementKind::Button, 7, &props, PropKey::Enabled)
+            .unwrap();
+        adapter
+            .set_prop(ElementKind::Container, 7, &props, PropKey::Opacity)
             .unwrap();
         adapter
             .set_prop(ElementKind::Input, 7, &props, PropKey::Focused)

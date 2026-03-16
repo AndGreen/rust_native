@@ -101,17 +101,13 @@ where
         A: PlatformAdapter<Handle = H>,
     {
         for frame in self.pending_layout.drain(..) {
-            let handle = self
-                .nodes
-                .get(&frame.id)
-                .map(|node| node.handle)
-                .ok_or_else(|| {
-                    BackendError::BatchRejected(format!(
-                        "layout references unknown node id {}",
-                        frame.id
-                    ))
-                })?;
-            adapter.apply_frame(handle, frame)?;
+            let node = self.nodes.get(&frame.id).ok_or_else(|| {
+                BackendError::BatchRejected(format!(
+                    "layout references unknown node id {}",
+                    frame.id
+                ))
+            })?;
+            adapter.apply_frame(node.kind, node.handle, &node.props, frame)?;
             self.frames.insert(frame.id, frame);
         }
         adapter.flush()

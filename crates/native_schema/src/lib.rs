@@ -9,11 +9,12 @@ mod mutation;
 
 pub use events::UiEvent;
 pub use layout::{
-    DimensionValue, EdgeInsets, LayoutFrame, LayoutFrameValidationError, SafeAreaEdges,
+    CornerRadii, DimensionValue, EdgeInsets, LayoutFrame, LayoutFrameValidationError, PointValue,
+    SafeAreaEdges,
 };
 pub use mutation::{
-    Alignment, Axis, ColorValue, ElementKind, EventKind, FontWeight, JustifyContent, Mutation,
-    PropKey, PropValue, ProtocolVersion, UiNodeId,
+    Alignment, Axis, ColorValue, ElementKind, EventKind, FontWeight, JustifyContent, LineStyle,
+    Mutation, PropKey, PropValue, ProtocolVersion, ShadowStyle, UiNodeId,
 };
 
 #[cfg(test)]

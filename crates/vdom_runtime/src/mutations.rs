@@ -68,7 +68,7 @@ pub(crate) fn diff_node(
         return;
     }
 
-    if listener_signature(previous) != listener_signature(next) || props_removed(previous, next) {
+    if listener_signature(previous) != listener_signature(next) {
         mutations.push(replace_mutation(previous.id, next));
         emit_replace_payload(next, mutations);
         return;
@@ -89,6 +89,15 @@ pub(crate) fn diff_node(
                 id: next.id,
                 key: *key,
                 value: value.clone(),
+            });
+        }
+    }
+
+    for key in previous.props.keys() {
+        if prop_value(next, *key).is_none() {
+            mutations.push(Mutation::UnsetProp {
+                id: next.id,
+                key: *key,
             });
         }
     }
@@ -170,13 +179,6 @@ fn emit_replace_payload(node: &CanonicalNode, mutations: &mut Vec<Mutation>) {
             index: index as u32,
         });
     }
-}
-
-fn props_removed(previous: &CanonicalNode, next: &CanonicalNode) -> bool {
-    previous
-        .props
-        .keys()
-        .any(|key| prop_value(next, *key).is_none())
 }
 
 fn listener_signature(node: &CanonicalNode) -> (bool, bool, bool) {

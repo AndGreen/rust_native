@@ -40,7 +40,8 @@ struct LayoutProps {
 impl LayoutProps {
     fn for_node(node: &CanonicalNode) -> Self {
         let mut props = match node.descriptor {
-            NodeDescriptor::Element(ElementKind::List) => Self {
+            NodeDescriptor::Element(ElementKind::List)
+            | NodeDescriptor::Element(ElementKind::Container) => Self {
                 axis: Axis::Vertical,
                 spacing: 0.0,
                 padding: EdgeInsets::all(0.0),
@@ -144,6 +145,7 @@ fn build_taffy_tree(
     let props = LayoutProps::for_node(node);
     let next_parent_context = match node.descriptor {
         NodeDescriptor::Element(ElementKind::Stack)
+        | NodeDescriptor::Element(ElementKind::Container)
         | NodeDescriptor::Element(ElementKind::SafeArea)
         | NodeDescriptor::Element(ElementKind::List) => Some(ParentLayoutContext {
             axis: props.axis,
@@ -232,6 +234,7 @@ fn style_for_node(
 
     match node.descriptor {
         NodeDescriptor::Element(ElementKind::Stack)
+        | NodeDescriptor::Element(ElementKind::Container)
         | NodeDescriptor::Element(ElementKind::SafeArea)
         | NodeDescriptor::Element(ElementKind::List) => {
             style.flex_direction = match props.axis {

@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn removed_props_force_replace() {
+    fn removed_props_emit_unset_prop_without_replace() {
         let mut runtime = VdomRuntime::new();
         let first = VStack().with_children(vec![Text("Hello")
             .font(mf_widgets::Font::bold(24.0))
@@ -226,8 +226,66 @@ mod tests {
         let _ = runtime.render(&first, TEST_HOST);
         let batch = runtime.render(&second, TEST_HOST);
 
-        assert!(matches!(batch.mutations[0], Mutation::ReplaceNode { .. }));
+        assert!(batch.mutations.iter().any(|mutation| matches!(
+            mutation,
+            Mutation::UnsetProp {
+                key: native_schema::PropKey::FontSize,
+                ..
+            }
+        )));
+        assert!(!batch
+            .mutations
+            .iter()
+            .any(|mutation| matches!(mutation, Mutation::ReplaceNode { .. })));
         assert!(!batch.layout.is_empty());
+    }
+
+    #[test]
+    fn container_style_update_keeps_same_node_identity() {
+        let mut runtime = VdomRuntime::new();
+        let first = Container::new()
+            .background(Color::new(0.2, 0.3, 0.4))
+            .with_children(vec![Text("Box").into_view()]);
+        let second = Container::new()
+            .background(Color::new(0.4, 0.5, 0.6))
+            .opacity(0.8)
+            .with_children(vec![Text("Box").into_view()]);
+
+        let first_batch = runtime.render(&first, TEST_HOST);
+        let first_id = first_batch
+            .mutations
+            .iter()
+            .find_map(|mutation| match mutation {
+                Mutation::CreateNode {
+                    id,
+                    kind: ElementKind::Container,
+                } => Some(*id),
+                _ => None,
+            })
+            .expect("container id");
+
+        let batch = runtime.render(&second, TEST_HOST);
+
+        assert!(batch.mutations.iter().any(|mutation| matches!(
+            mutation,
+            Mutation::SetProp {
+                id,
+                key: native_schema::PropKey::BackgroundColor,
+                ..
+            } if *id == first_id
+        )));
+        assert!(batch.mutations.iter().any(|mutation| matches!(
+            mutation,
+            Mutation::SetProp {
+                id,
+                key: native_schema::PropKey::Opacity,
+                ..
+            } if *id == first_id
+        )));
+        assert!(!batch
+            .mutations
+            .iter()
+            .any(|mutation| matches!(mutation, Mutation::ReplaceNode { .. })));
     }
 
     #[test]

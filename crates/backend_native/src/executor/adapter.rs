@@ -44,6 +44,13 @@ pub trait PlatformAdapter {
         props: &HashMap<PropKey, PropValue>,
         key: PropKey,
     ) -> Result<(), BackendError>;
+    fn unset_prop(
+        &mut self,
+        kind: ElementKind,
+        handle: Self::Handle,
+        props: &HashMap<PropKey, PropValue>,
+        key: PropKey,
+    ) -> Result<(), BackendError>;
     fn attach_listener(
         &mut self,
         kind: ElementKind,
@@ -51,8 +58,13 @@ pub trait PlatformAdapter {
         node_id: UiNodeId,
         event: EventKind,
     ) -> Result<(), BackendError>;
-    fn apply_frame(&mut self, handle: Self::Handle, frame: LayoutFrame)
-        -> Result<(), BackendError>;
+    fn apply_frame(
+        &mut self,
+        kind: ElementKind,
+        handle: Self::Handle,
+        props: &HashMap<PropKey, PropValue>,
+        frame: LayoutFrame,
+    ) -> Result<(), BackendError>;
     fn flush(&mut self) -> Result<(), BackendError>;
     fn drain_events(&mut self) -> Vec<UiEvent>;
 }

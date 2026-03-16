@@ -11,6 +11,7 @@ pub enum ProtocolVersion {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ElementKind {
     Stack,
+    Container,
     SafeArea,
     Text,
     Button,
@@ -62,6 +63,35 @@ impl ColorValue {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct LineStyle {
+    pub width: f32,
+    pub color: ColorValue,
+}
+
+impl LineStyle {
+    pub const fn new(width: f32, color: ColorValue) -> Self {
+        Self { width, color }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct ShadowStyle {
+    pub color: ColorValue,
+    pub radius: f32,
+    pub offset: crate::PointValue,
+}
+
+impl ShadowStyle {
+    pub const fn new(color: ColorValue, radius: f32, offset: crate::PointValue) -> Self {
+        Self {
+            color,
+            radius,
+            offset,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EventKind {
     Tap,
@@ -82,9 +112,16 @@ pub enum PropKey {
     SafeAreaEdges,
     Color,
     BackgroundColor,
+    Opacity,
     FontSize,
     FontWeight,
     CornerRadius,
+    CornerRadii,
+    FullRound,
+    Border,
+    Stroke,
+    Shadow,
+    Offset,
     Source,
     Enabled,
     Focused,
@@ -111,6 +148,10 @@ pub enum PropValue {
     FontWeight(crate::FontWeight),
     Insets(crate::EdgeInsets),
     Dimension(crate::DimensionValue),
+    CornerRadii(crate::CornerRadii),
+    LineStyle(crate::LineStyle),
+    Shadow(crate::ShadowStyle),
+    Point(crate::PointValue),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -131,6 +172,10 @@ pub enum Mutation {
         id: UiNodeId,
         key: PropKey,
         value: PropValue,
+    },
+    UnsetProp {
+        id: UiNodeId,
+        key: PropKey,
     },
     InsertChild {
         parent: UiNodeId,
@@ -171,9 +216,16 @@ mod tests {
             PropKey::SafeAreaEdges,
             PropKey::Color,
             PropKey::BackgroundColor,
+            PropKey::Opacity,
             PropKey::FontSize,
             PropKey::FontWeight,
             PropKey::CornerRadius,
+            PropKey::CornerRadii,
+            PropKey::FullRound,
+            PropKey::Border,
+            PropKey::Stroke,
+            PropKey::Shadow,
+            PropKey::Offset,
             PropKey::Source,
             PropKey::Enabled,
             PropKey::Focused,
@@ -187,7 +239,7 @@ mod tests {
             PropKey::FlexShrink,
         ];
 
-        assert_eq!(keys.len(), 22);
+        assert_eq!(keys.len(), 29);
     }
 
     #[test]
@@ -219,6 +271,22 @@ mod tests {
                 assert_eq!(id, 3);
                 assert_eq!(key, PropKey::Padding);
                 assert_eq!(value, PropValue::Insets(crate::EdgeInsets::all(16.0)));
+            }
+            other => panic!("unexpected mutation: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn unset_prop_preserves_target_key() {
+        let mutation = Mutation::UnsetProp {
+            id: 9,
+            key: PropKey::Shadow,
+        };
+
+        match mutation {
+            Mutation::UnsetProp { id, key } => {
+                assert_eq!(id, 9);
+                assert_eq!(key, PropKey::Shadow);
             }
             other => panic!("unexpected mutation: {other:?}"),
         }

@@ -52,7 +52,7 @@ mf/
 
 - **`mf_core`**: Provides the `View` type, widget traits, signal primitives (`signal`, `Signal`, `Setter`), a tiny diffing engine, and a `taffy`-based layout shim.
 - **`mf_macros::ui!`**: Compiles SwiftUI-like syntax into pure Rust by chaining `IntoView`/`WithChildren` implementations. Supports positional and named args plus modifier chains.
-- **`mf_widgets`**: Supplies basic widgets (`Text`, `Button`, `Image`, `VStack`, `HStack`, `List`) with builder-style modifiers for fonts, colors, spacing, etc.
+- **`mf_widgets`**: Supplies basic widgets (`Text`, `Button`, `Image`, `Container`, `VStack`, `HStack`, `List`) with builder-style modifiers for fonts, colors, spacing, and the first visual foundation props.
 - **`mf_runtime`**: Hosts the `App` type that owns a backend and rebuilds the tree whenever watched signals emit updates.
 - **Backends**: `backend_native` renders to UIKit when built for iOS (bootstraps a `UIWindow`/`UIViewController` and maps `Text`, `Button`, `Image`, `HStack`/`VStack`, `List` into native views). On non-iOS targets it stays a logging stub. Each example now ships with its own Rust `staticlib` entrypoints plus a colocated Xcode host in `examples/*/ios/App`, so simulator/device startup stays local to that example. `backend_wgpu` remains a logging stub for now.
 

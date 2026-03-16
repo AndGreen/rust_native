@@ -86,6 +86,12 @@ impl Color {
     }
 }
 
+impl From<Color> for native_schema::ColorValue {
+    fn from(value: Color) -> Self {
+        native_schema::ColorValue::new(value.r, value.g, value.b, value.a)
+    }
+}
+
 fn parse_hex_byte(value: &str) -> Result<u8, ColorParseError> {
     u8::from_str_radix(value, 16).map_err(|_| ColorParseError::InvalidHex)
 }

@@ -22,6 +22,7 @@ where
             }
             Mutation::SetText { id, text } => self.set_text(adapter, *id, text),
             Mutation::SetProp { id, key, value } => self.set_prop(adapter, *id, *key, value),
+            Mutation::UnsetProp { id, key } => self.unset_prop(adapter, *id, *key),
             Mutation::InsertChild {
                 parent,
                 child,
@@ -97,6 +98,20 @@ where
         let node = self.node_mut(id)?;
         node.props.insert(key, value.clone());
         adapter.set_prop(node.kind, node.handle, &node.props, key)
+    }
+
+    fn unset_prop<A>(
+        &mut self,
+        adapter: &mut A,
+        id: UiNodeId,
+        key: PropKey,
+    ) -> Result<(), BackendError>
+    where
+        A: PlatformAdapter<Handle = H>,
+    {
+        let node = self.node_mut(id)?;
+        node.props.remove(&key);
+        adapter.unset_prop(node.kind, node.handle, &node.props, key)
     }
 
     fn insert_child<A>(
@@ -345,7 +360,7 @@ where
 fn accepts_children(kind: ElementKind) -> bool {
     matches!(
         kind,
-        ElementKind::Stack | ElementKind::SafeArea | ElementKind::List
+        ElementKind::Stack | ElementKind::Container | ElementKind::SafeArea | ElementKind::List
     )
 }
 
