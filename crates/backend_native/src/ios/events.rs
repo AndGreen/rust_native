@@ -1,71 +1,12 @@
-use std::collections::HashMap;
 use std::ffi::CStr;
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
-use native_schema::{UiEvent, UiNodeId};
+use native_schema::UiEvent;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use objc::{class, msg_send, sel, sel_impl};
 
-#[derive(Clone, Copy)]
-pub(super) struct ControlBinding {
-    node_id: UiNodeId,
-    pub(super) tap: bool,
-    pub(super) text_input: bool,
-    pub(super) focus_changed: bool,
-    pub(super) appear: bool,
-    pub(super) disappear: bool,
-}
-
-fn binding_store() -> &'static Mutex<HashMap<usize, ControlBinding>> {
-    static STORE: OnceLock<Mutex<HashMap<usize, ControlBinding>>> = OnceLock::new();
-    STORE.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn event_queue() -> &'static Mutex<Vec<UiEvent>> {
-    static QUEUE: OnceLock<Mutex<Vec<UiEvent>>> = OnceLock::new();
-    QUEUE.get_or_init(|| Mutex::new(Vec::new()))
-}
-
-pub(super) fn update_binding<R>(
-    handle: *mut Object,
-    node_id: UiNodeId,
-    f: impl FnOnce(&mut ControlBinding) -> R,
-) -> R {
-    let mut store = binding_store().lock().unwrap();
-    let entry = store.entry(handle as usize).or_insert(ControlBinding {
-        node_id,
-        tap: false,
-        text_input: false,
-        focus_changed: false,
-        appear: false,
-        disappear: false,
-    });
-    entry.node_id = node_id;
-    f(entry)
-}
-
-pub(super) fn unregister_binding(handle: *mut Object) {
-    binding_store().lock().unwrap().remove(&(handle as usize));
-}
-
-pub(super) fn emit_appear_if_needed(node_id: UiNodeId, handle: *mut Object) {
-    let store = binding_store().lock().unwrap();
-    if let Some(binding) = store.get(&(handle as usize)) {
-        if binding.appear && binding.node_id == node_id {
-            drop(store);
-            queue_event(UiEvent::Appear { id: node_id });
-        }
-    }
-}
-
-pub(super) fn queue_event(event: UiEvent) {
-    event_queue().lock().unwrap().push(event);
-}
-
-pub(super) fn take_events() -> Vec<UiEvent> {
-    std::mem::take(&mut *event_queue().lock().unwrap())
-}
+use crate::shared::bindings::{binding, queue_event};
 
 pub(super) fn shared_event_target() -> *mut Object {
     static TARGET: OnceLock<usize> = OnceLock::new();
@@ -106,12 +47,7 @@ fn event_target_class() -> &'static Class {
 }
 
 extern "C" fn handle_tap(_this: &Object, _cmd: Sel, sender: *mut Object) {
-    if let Some(binding) = binding_store()
-        .lock()
-        .unwrap()
-        .get(&(sender as usize))
-        .copied()
-    {
+    if let Some(binding) = binding(sender as usize) {
         if binding.tap {
             queue_event(UiEvent::Tap {
                 id: binding.node_id,
@@ -121,11 +57,7 @@ extern "C" fn handle_tap(_this: &Object, _cmd: Sel, sender: *mut Object) {
 }
 
 extern "C" fn handle_editing_changed(_this: &Object, _cmd: Sel, sender: *mut Object) {
-    let binding = binding_store()
-        .lock()
-        .unwrap()
-        .get(&(sender as usize))
-        .copied();
+    let binding = binding(sender as usize);
     let Some(binding) = binding else {
         return;
     };
@@ -152,11 +84,7 @@ extern "C" fn handle_editing_changed(_this: &Object, _cmd: Sel, sender: *mut Obj
 }
 
 extern "C" fn handle_editing_did_begin(_this: &Object, _cmd: Sel, sender: *mut Object) {
-    let binding = binding_store()
-        .lock()
-        .unwrap()
-        .get(&(sender as usize))
-        .copied();
+    let binding = binding(sender as usize);
     let Some(binding) = binding else {
         return;
     };
@@ -169,11 +97,7 @@ extern "C" fn handle_editing_did_begin(_this: &Object, _cmd: Sel, sender: *mut O
 }
 
 extern "C" fn handle_editing_did_end(_this: &Object, _cmd: Sel, sender: *mut Object) {
-    let binding = binding_store()
-        .lock()
-        .unwrap()
-        .get(&(sender as usize))
-        .copied();
+    let binding = binding(sender as usize);
     let Some(binding) = binding else {
         return;
     };

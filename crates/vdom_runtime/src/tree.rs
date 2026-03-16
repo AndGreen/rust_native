@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use indexmap::IndexMap;
 use mf_core::{Fragment, View};
 use mf_widgets::button::ButtonAction;
 use mf_widgets::button::ButtonView;
@@ -18,13 +19,15 @@ use native_schema::{
 pub(crate) struct CanonicalNode {
     pub(crate) id: UiNodeId,
     pub(crate) descriptor: NodeDescriptor,
-    pub(crate) props: Vec<(PropKey, PropValue)>,
+    pub(crate) props: PropMap,
     pub(crate) text: Option<String>,
     pub(crate) tap_handler: Option<ButtonAction>,
     pub(crate) input_handler: Option<InputAction>,
     pub(crate) focus_change_handler: Option<FocusChangeAction>,
     pub(crate) children: Vec<CanonicalNode>,
 }
+
+pub(crate) type PropMap = IndexMap<PropKey, PropValue>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum NodeDescriptor {
@@ -169,7 +172,7 @@ pub(crate) fn canonicalize_view(
     CanonicalNode {
         id,
         descriptor: NodeDescriptor::Element(ElementKind::Stack),
-        props: Vec::new(),
+        props: PropMap::new(),
         text: None,
         tap_handler: None,
         input_handler: None,
@@ -235,9 +238,7 @@ fn collect_focus_change_handlers_recursive(
 }
 
 pub(crate) fn prop_value(node: &CanonicalNode, key: PropKey) -> Option<&PropValue> {
-    node.props
-        .iter()
-        .find_map(|(candidate, value)| (*candidate == key).then_some(value))
+    node.props.get(&key)
 }
 
 pub(crate) fn float_prop(node: &CanonicalNode, key: PropKey) -> Option<f32> {
@@ -255,194 +256,193 @@ pub(crate) fn dimension_points(node: &CanonicalNode, key: PropKey) -> Option<f32
     }
 }
 
-fn text_props(text: &TextView) -> Vec<(PropKey, PropValue)> {
-    let mut props = Vec::new();
+fn text_props(text: &TextView) -> PropMap {
+    let mut props = PropMap::new();
     if let Some(color) = text.color_value() {
-        props.push((
+        props.insert(
             PropKey::Color,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     if let Some(font) = text.font_value() {
-        props.push((PropKey::FontSize, PropValue::Float(font.size)));
-        props.push((
+        props.insert(PropKey::FontSize, PropValue::Float(font.size));
+        props.insert(
             PropKey::FontWeight,
             PropValue::FontWeight(match font.weight {
                 mf_widgets::FontWeight::Regular => FontWeight::Regular,
                 mf_widgets::FontWeight::SemiBold => FontWeight::SemiBold,
                 mf_widgets::FontWeight::Bold => FontWeight::Bold,
             }),
-        ));
+        );
     }
     props
 }
 
-fn button_props(button: &ButtonView) -> Vec<(PropKey, PropValue)> {
-    let mut props = Vec::new();
+fn button_props(button: &ButtonView) -> PropMap {
+    let mut props = PropMap::new();
     if let Some(color) = button.color_value() {
-        props.push((
+        props.insert(
             PropKey::Color,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     if let Some(color) = button.background_value() {
-        props.push((
+        props.insert(
             PropKey::BackgroundColor,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     if let Some(radius) = button.corner_radius_value() {
-        props.push((PropKey::CornerRadius, PropValue::Float(radius)));
+        props.insert(PropKey::CornerRadius, PropValue::Float(radius));
     }
     if !button.is_enabled() {
-        props.push((PropKey::Enabled, PropValue::Bool(false)));
+        props.insert(PropKey::Enabled, PropValue::Bool(false));
     }
     props
 }
 
-fn image_props(image: &ImageView) -> Vec<(PropKey, PropValue)> {
-    let mut props = vec![(
+fn image_props(image: &ImageView) -> PropMap {
+    let mut props = PropMap::new();
+    props.insert(
         PropKey::Source,
         PropValue::String(image.source().to_string()),
-    )];
+    );
     let (width, height) = image.dimensions();
     if let Some(width) = width {
-        props.push((
+        props.insert(
             PropKey::Width,
             PropValue::Dimension(DimensionValue::Points(width)),
-        ));
+        );
     }
     if let Some(height) = height {
-        props.push((
+        props.insert(
             PropKey::Height,
             PropValue::Dimension(DimensionValue::Points(height)),
-        ));
+        );
     }
     if let Some(radius) = image.corner_radius_value() {
-        props.push((PropKey::CornerRadius, PropValue::Float(radius)));
+        props.insert(PropKey::CornerRadius, PropValue::Float(radius));
     }
     props
 }
 
-fn input_props(input: &InputView) -> Vec<(PropKey, PropValue)> {
-    let mut props = Vec::new();
+fn input_props(input: &InputView) -> PropMap {
+    let mut props = PropMap::new();
     if let Some(color) = input.color_value() {
-        props.push((
+        props.insert(
             PropKey::Color,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     if let Some(color) = input.background_value() {
-        props.push((
+        props.insert(
             PropKey::BackgroundColor,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     if let Some(font) = input.font_value() {
-        props.push((PropKey::FontSize, PropValue::Float(font.size)));
-        props.push((
+        props.insert(PropKey::FontSize, PropValue::Float(font.size));
+        props.insert(
             PropKey::FontWeight,
             PropValue::FontWeight(match font.weight {
                 mf_widgets::FontWeight::Regular => FontWeight::Regular,
                 mf_widgets::FontWeight::SemiBold => FontWeight::SemiBold,
                 mf_widgets::FontWeight::Bold => FontWeight::Bold,
             }),
-        ));
+        );
     }
     if let Some(radius) = input.corner_radius_value() {
-        props.push((PropKey::CornerRadius, PropValue::Float(radius)));
+        props.insert(PropKey::CornerRadius, PropValue::Float(radius));
     }
     if !input.is_enabled() {
-        props.push((PropKey::Enabled, PropValue::Bool(false)));
+        props.insert(PropKey::Enabled, PropValue::Bool(false));
     }
     if input.is_focused() {
-        props.push((PropKey::Focused, PropValue::Bool(true)));
+        props.insert(PropKey::Focused, PropValue::Bool(true));
     }
     props
 }
 
-fn stack_props(stack: &StackElement) -> Vec<(PropKey, PropValue)> {
-    let mut props = vec![
-        (
-            PropKey::Axis,
-            PropValue::Axis(match stack.axis() {
-                WidgetAxis::Horizontal => Axis::Horizontal,
-                WidgetAxis::Vertical => Axis::Vertical,
-            }),
-        ),
-        (PropKey::Spacing, PropValue::Float(stack.spacing())),
-        (
-            PropKey::Padding,
-            PropValue::Insets(EdgeInsets::all(stack.padding())),
-        ),
-        (
-            PropKey::Alignment,
-            PropValue::Alignment(match stack.alignment() {
-                WidgetAlignment::Leading => Alignment::Leading,
-                WidgetAlignment::Center => Alignment::Center,
-                WidgetAlignment::Trailing => Alignment::Trailing,
-                WidgetAlignment::Stretch => Alignment::Stretch,
-            }),
-        ),
-        (
-            PropKey::JustifyContent,
-            PropValue::JustifyContent(stack.justify_content()),
-        ),
-    ];
+fn stack_props(stack: &StackElement) -> PropMap {
+    let mut props = PropMap::new();
+    props.insert(
+        PropKey::Axis,
+        PropValue::Axis(match stack.axis() {
+            WidgetAxis::Horizontal => Axis::Horizontal,
+            WidgetAxis::Vertical => Axis::Vertical,
+        }),
+    );
+    props.insert(PropKey::Spacing, PropValue::Float(stack.spacing()));
+    props.insert(
+        PropKey::Padding,
+        PropValue::Insets(EdgeInsets::all(stack.padding())),
+    );
+    props.insert(
+        PropKey::Alignment,
+        PropValue::Alignment(match stack.alignment() {
+            WidgetAlignment::Leading => Alignment::Leading,
+            WidgetAlignment::Center => Alignment::Center,
+            WidgetAlignment::Trailing => Alignment::Trailing,
+            WidgetAlignment::Stretch => Alignment::Stretch,
+        }),
+    );
+    props.insert(
+        PropKey::JustifyContent,
+        PropValue::JustifyContent(stack.justify_content()),
+    );
     if let Some(color) = stack.background_value() {
-        props.push((
+        props.insert(
             PropKey::BackgroundColor,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     props
 }
 
-fn safe_area_props(safe_area: &SafeArea) -> Vec<(PropKey, PropValue)> {
-    let mut props = vec![
-        (
-            PropKey::SafeAreaEdges,
-            PropValue::SafeAreaEdges(match safe_area.edges_value() {
-                SafeAreaEdges::Top => SafeAreaEdges::Top,
-                SafeAreaEdges::TopBottom => SafeAreaEdges::TopBottom,
-                SafeAreaEdges::All => SafeAreaEdges::All,
-            }),
-        ),
-        (
-            PropKey::Alignment,
-            PropValue::Alignment(match safe_area.alignment_value() {
-                WidgetAlignment::Leading => Alignment::Leading,
-                WidgetAlignment::Center => Alignment::Center,
-                WidgetAlignment::Trailing => Alignment::Trailing,
-                WidgetAlignment::Stretch => Alignment::Stretch,
-            }),
-        ),
-        (
-            PropKey::JustifyContent,
-            PropValue::JustifyContent(match safe_area.justify_content_value() {
-                JustifyContent::Start => JustifyContent::Start,
-                JustifyContent::Center => JustifyContent::Center,
-                JustifyContent::End => JustifyContent::End,
-                JustifyContent::Stretch => JustifyContent::Stretch,
-            }),
-        ),
-    ];
+fn safe_area_props(safe_area: &SafeArea) -> PropMap {
+    let mut props = PropMap::new();
+    props.insert(
+        PropKey::SafeAreaEdges,
+        PropValue::SafeAreaEdges(match safe_area.edges_value() {
+            SafeAreaEdges::Top => SafeAreaEdges::Top,
+            SafeAreaEdges::TopBottom => SafeAreaEdges::TopBottom,
+            SafeAreaEdges::All => SafeAreaEdges::All,
+        }),
+    );
+    props.insert(
+        PropKey::Alignment,
+        PropValue::Alignment(match safe_area.alignment_value() {
+            WidgetAlignment::Leading => Alignment::Leading,
+            WidgetAlignment::Center => Alignment::Center,
+            WidgetAlignment::Trailing => Alignment::Trailing,
+            WidgetAlignment::Stretch => Alignment::Stretch,
+        }),
+    );
+    props.insert(
+        PropKey::JustifyContent,
+        PropValue::JustifyContent(match safe_area.justify_content_value() {
+            JustifyContent::Start => JustifyContent::Start,
+            JustifyContent::Center => JustifyContent::Center,
+            JustifyContent::End => JustifyContent::End,
+            JustifyContent::Stretch => JustifyContent::Stretch,
+        }),
+    );
     if let Some(color) = safe_area.background_value() {
-        props.push((
+        props.insert(
             PropKey::BackgroundColor,
             PropValue::Color(ColorValue::new(color.r, color.g, color.b, color.a)),
-        ));
+        );
     }
     props
 }
 
-fn list_props() -> Vec<(PropKey, PropValue)> {
-    vec![
-        (PropKey::Axis, PropValue::Axis(Axis::Vertical)),
-        (PropKey::Spacing, PropValue::Float(0.0)),
-        (PropKey::Padding, PropValue::Insets(EdgeInsets::all(0.0))),
-        (PropKey::Alignment, PropValue::Alignment(Alignment::Leading)),
-    ]
+fn list_props() -> PropMap {
+    let mut props = PropMap::new();
+    props.insert(PropKey::Axis, PropValue::Axis(Axis::Vertical));
+    props.insert(PropKey::Spacing, PropValue::Float(0.0));
+    props.insert(PropKey::Padding, PropValue::Insets(EdgeInsets::all(0.0)));
+    props.insert(PropKey::Alignment, PropValue::Alignment(Alignment::Leading));
+    props
 }
 
 #[cfg(test)]
@@ -461,16 +461,19 @@ mod tests {
 
         let props = button_props(&button);
 
-        assert!(props.contains(&(
-            PropKey::BackgroundColor,
-            PropValue::Color(ColorValue::new(0.1, 0.2, 0.3, 1.0))
-        )));
-        assert!(props.contains(&(
-            PropKey::Color,
-            PropValue::Color(ColorValue::new(0.9, 0.8, 0.7, 0.6))
-        )));
-        assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(10.0))));
-        assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
+        assert_eq!(
+            props.get(&PropKey::BackgroundColor),
+            Some(&PropValue::Color(ColorValue::new(0.1, 0.2, 0.3, 1.0)))
+        );
+        assert_eq!(
+            props.get(&PropKey::Color),
+            Some(&PropValue::Color(ColorValue::new(0.9, 0.8, 0.7, 0.6)))
+        );
+        assert_eq!(
+            props.get(&PropKey::CornerRadius),
+            Some(&PropValue::Float(10.0))
+        );
+        assert_eq!(props.get(&PropKey::Enabled), Some(&PropValue::Bool(false)));
     }
 
     #[test]
@@ -484,9 +487,12 @@ mod tests {
 
         let props = input_props(&input);
 
-        assert!(props.contains(&(PropKey::Focused, PropValue::Bool(true))));
-        assert!(props.contains(&(PropKey::Enabled, PropValue::Bool(false))));
-        assert!(props.contains(&(PropKey::CornerRadius, PropValue::Float(12.0))));
+        assert_eq!(props.get(&PropKey::Focused), Some(&PropValue::Bool(true)));
+        assert_eq!(props.get(&PropKey::Enabled), Some(&PropValue::Bool(false)));
+        assert_eq!(
+            props.get(&PropKey::CornerRadius),
+            Some(&PropValue::Float(12.0))
+        );
     }
 
     #[test]
@@ -502,10 +508,10 @@ mod tests {
 
         let props = stack_props(stack);
 
-        assert!(props.contains(&(
-            PropKey::BackgroundColor,
-            PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7)),
-        )));
+        assert_eq!(
+            props.get(&PropKey::BackgroundColor),
+            Some(&PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7))),
+        );
     }
 
     #[test]
@@ -519,10 +525,10 @@ mod tests {
 
         let props = stack_props(stack);
 
-        assert!(props.contains(&(
-            PropKey::Alignment,
-            PropValue::Alignment(Alignment::Stretch),
-        )));
+        assert_eq!(
+            props.get(&PropKey::Alignment),
+            Some(&PropValue::Alignment(Alignment::Stretch)),
+        );
     }
 
     #[test]
@@ -538,10 +544,10 @@ mod tests {
 
         let props = stack_props(stack);
 
-        assert!(props.contains(&(
-            PropKey::JustifyContent,
-            PropValue::JustifyContent(JustifyContent::Center),
-        )));
+        assert_eq!(
+            props.get(&PropKey::JustifyContent),
+            Some(&PropValue::JustifyContent(JustifyContent::Center)),
+        );
     }
 
     #[test]
@@ -553,17 +559,17 @@ mod tests {
 
         let props = safe_area_props(&safe_area);
 
-        assert!(props.contains(&(
-            PropKey::Alignment,
-            PropValue::Alignment(Alignment::Center),
-        )));
-        assert!(props.contains(&(
-            PropKey::JustifyContent,
-            PropValue::JustifyContent(JustifyContent::Center),
-        )));
-        assert!(props.contains(&(
-            PropKey::BackgroundColor,
-            PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7)),
-        )));
+        assert_eq!(
+            props.get(&PropKey::Alignment),
+            Some(&PropValue::Alignment(Alignment::Center)),
+        );
+        assert_eq!(
+            props.get(&PropKey::JustifyContent),
+            Some(&PropValue::JustifyContent(JustifyContent::Center)),
+        );
+        assert_eq!(
+            props.get(&PropKey::BackgroundColor),
+            Some(&PropValue::Color(ColorValue::new(0.3, 0.4, 0.5, 0.7))),
+        );
     }
 }

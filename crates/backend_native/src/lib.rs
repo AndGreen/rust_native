@@ -1,5 +1,10 @@
 #[cfg_attr(not(any(test, target_os = "ios")), allow(dead_code))]
 mod executor;
+#[cfg_attr(
+    not(any(test, target_os = "ios", target_os = "android")),
+    allow(dead_code)
+)]
+mod shared;
 
 #[cfg(any(test, target_os = "android"))]
 mod android;

@@ -6,11 +6,12 @@ use objc::runtime::Object;
 use objc::{msg_send, sel, sel_impl};
 
 use crate::executor::PlatformAdapter;
-
-use super::events::{
-    emit_appear_if_needed, queue_event, shared_event_target, take_events, unregister_binding,
-    update_binding,
+use crate::shared::bindings::{
+    emit_appear_if_needed, queue_event, take_events, unregister_binding, update_binding,
 };
+use crate::shared::props;
+
+use super::events::shared_event_target;
 use super::uikit::{
     add_subview, apply_background_color, apply_color, apply_corner_radius, apply_enabled,
     apply_focus, apply_font, apply_image_source, bootstrap_host, create_button, create_image_view,
@@ -65,7 +66,7 @@ impl PlatformAdapter for IosAdapter {
     fn attach_root(&mut self, node_id: UiNodeId, handle: Self::Handle) -> Result<(), BackendError> {
         let host = self.ensure_host()?;
         add_subview(host.host_view, handle);
-        emit_appear_if_needed(node_id, handle);
+        emit_appear_if_needed(node_id, handle_key(handle));
         Ok(())
     }
 
@@ -86,7 +87,7 @@ impl PlatformAdapter for IosAdapter {
         index: usize,
     ) -> Result<(), BackendError> {
         insert_subview(parent, child, index);
-        emit_appear_if_needed(child_id, child);
+        emit_appear_if_needed(child_id, handle_key(child));
         Ok(())
     }
 
@@ -108,7 +109,7 @@ impl PlatformAdapter for IosAdapter {
         if listeners.contains(&EventKind::Disappear) {
             queue_event(UiEvent::Disappear { id: node_id });
         }
-        unregister_binding(handle);
+        unregister_binding(handle_key(handle));
         remove_from_superview(handle);
         release_object(handle);
         Ok(())
@@ -131,17 +132,34 @@ impl PlatformAdapter for IosAdapter {
         key: PropKey,
     ) -> Result<(), BackendError> {
         match key {
-            PropKey::Color => apply_color(kind, handle, props.get(&PropKey::Color)),
-            PropKey::BackgroundColor => {
-                apply_background_color(handle, props.get(&PropKey::BackgroundColor))
-            }
+            PropKey::Color => apply_color(
+                kind,
+                handle,
+                props::color(props, PropKey::Color)
+                    .and_then(Result::ok)
+                    .map(PropValue::Color)
+                    .as_ref(),
+            ),
+            PropKey::BackgroundColor => apply_background_color(
+                handle,
+                props::color(props, PropKey::BackgroundColor)
+                    .and_then(Result::ok)
+                    .map(PropValue::Color)
+                    .as_ref(),
+            ),
             PropKey::FontSize | PropKey::FontWeight => apply_font(kind, handle, props),
             PropKey::CornerRadius => {
-                apply_corner_radius(handle, props.get(&PropKey::CornerRadius));
+                let value = props::float(props, PropKey::CornerRadius)
+                    .and_then(Result::ok)
+                    .map(PropValue::Float);
+                apply_corner_radius(handle, value.as_ref());
                 Ok(())
             }
             PropKey::Enabled => {
-                apply_enabled(handle, props.get(&PropKey::Enabled));
+                let value = props::bool_value(props, PropKey::Enabled)
+                    .and_then(Result::ok)
+                    .map(PropValue::Bool);
+                apply_enabled(handle, value.as_ref());
                 Ok(())
             }
             PropKey::Focused => {
@@ -150,9 +168,17 @@ impl PlatformAdapter for IosAdapter {
                         "Focused is unsupported for {kind:?}"
                     )));
                 }
-                apply_focus(handle, props.get(&PropKey::Focused))
+                let value = props::bool_value(props, PropKey::Focused)
+                    .and_then(Result::ok)
+                    .map(PropValue::Bool);
+                apply_focus(handle, value.as_ref())
             }
-            PropKey::Source => apply_image_source(handle, props.get(&PropKey::Source)),
+            PropKey::Source => {
+                let value = props::string(props, PropKey::Source)
+                    .and_then(Result::ok)
+                    .map(|value| PropValue::String(value.to_string()));
+                apply_image_source(handle, value.as_ref())
+            }
             PropKey::Axis
             | PropKey::Spacing
             | PropKey::Padding
@@ -188,7 +214,7 @@ impl PlatformAdapter for IosAdapter {
                     eprintln!("[backend_native/ios] ignoring Tap listener for {kind:?}");
                     return Ok(());
                 }
-                let should_wire = update_binding(handle, node_id, |binding| {
+                let should_wire = update_binding(handle_key(handle), node_id, |binding| {
                     let should_wire = !binding.tap;
                     binding.tap = true;
                     should_wire
@@ -210,7 +236,7 @@ impl PlatformAdapter for IosAdapter {
                     eprintln!("[backend_native/ios] ignoring TextInput listener for {kind:?}");
                     return Ok(());
                 }
-                let should_wire = update_binding(handle, node_id, |binding| {
+                let should_wire = update_binding(handle_key(handle), node_id, |binding| {
                     let should_wire = !binding.text_input;
                     binding.text_input = true;
                     should_wire
@@ -232,7 +258,7 @@ impl PlatformAdapter for IosAdapter {
                     eprintln!("[backend_native/ios] ignoring FocusChanged listener for {kind:?}");
                     return Ok(());
                 }
-                let should_wire = update_binding(handle, node_id, |binding| {
+                let should_wire = update_binding(handle_key(handle), node_id, |binding| {
                     let should_wire = !binding.focus_changed;
                     binding.focus_changed = true;
                     should_wire
@@ -256,10 +282,10 @@ impl PlatformAdapter for IosAdapter {
                 }
             }
             EventKind::Appear => {
-                update_binding(handle, node_id, |binding| binding.appear = true);
+                update_binding(handle_key(handle), node_id, |binding| binding.appear = true);
             }
             EventKind::Disappear => {
-                update_binding(handle, node_id, |binding| binding.disappear = true);
+                update_binding(handle_key(handle), node_id, |binding| binding.disappear = true);
             }
             EventKind::Scroll => {
                 eprintln!("[backend_native/ios] ignoring Scroll listener in P0-06");
@@ -301,4 +327,8 @@ impl IosAdapter {
         }
         Ok(self.host.as_ref().expect("host is initialized"))
     }
+}
+
+fn handle_key(handle: *mut Object) -> usize {
+    handle as usize
 }

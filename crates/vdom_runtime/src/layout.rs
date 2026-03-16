@@ -155,9 +155,7 @@ fn build_taffy_tree(
     let children: Vec<Node> = node
         .children
         .iter()
-        .map(|child| {
-            build_taffy_tree(taffy, child, host_size, false, next_parent_context)
-        })
+        .map(|child| build_taffy_tree(taffy, child, host_size, false, next_parent_context))
         .collect();
     let style = style_for_node(node, &props, host_size, is_root, parent_context);
 
@@ -475,7 +473,7 @@ mod tests {
         let node = CanonicalNode {
             id: 1,
             descriptor: NodeDescriptor::Element(ElementKind::Stack),
-            props: Vec::new(),
+            props: crate::tree::PropMap::new(),
             text: None,
             tap_handler: None,
             input_handler: None,
@@ -512,15 +510,25 @@ mod tests {
             .padding(24.0)
             .alignment(Alignment::Leading)
             .with_children(vec![Input("hello").into_view()]);
-        let root = crate::tree::canonicalize_view(1, &view, vec![crate::tree::canonicalize_view(
-            2,
-            view.children().first().expect("input child"),
-            Vec::new(),
-        )]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(
+                2,
+                view.children().first().expect("input child"),
+                Vec::new(),
+            )],
+        );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
-        let input = frames.iter().find(|frame| frame.id == 2).expect("input frame");
+        let parent = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("parent frame");
+        let input = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("input frame");
 
         assert_eq!(input.x, 24.0);
         assert_eq!(input.width, parent.width - 48.0);
@@ -530,9 +538,7 @@ mod tests {
     #[test]
     fn vstack_default_stretches_child_stack_to_content_width() {
         let child = HStack().with_children(Vec::new()).into_view();
-        let view = VStack()
-            .padding(24.0)
-            .with_children(vec![child.clone()]);
+        let view = VStack().padding(24.0).with_children(vec![child.clone()]);
         let root = crate::tree::canonicalize_view(
             1,
             &view,
@@ -540,8 +546,14 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
-        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+        let parent = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("parent frame");
+        let child = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("child frame");
 
         assert_eq!(child.x, 24.0);
         assert_eq!(child.width, parent.width - 48.0);
@@ -550,9 +562,7 @@ mod tests {
     #[test]
     fn hstack_default_alignment_does_not_stretch_children_vertically() {
         let child = VStack().with_children(Vec::new()).into_view();
-        let view = HStack()
-            .padding(24.0)
-            .with_children(vec![child.clone()]);
+        let view = HStack().padding(24.0).with_children(vec![child.clone()]);
         let root = crate::tree::canonicalize_view(
             1,
             &view,
@@ -560,8 +570,14 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
-        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+        let parent = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("parent frame");
+        let child = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("child frame");
 
         assert_eq!(child.y, (parent.height - 48.0 - child.height) / 2.0 + 24.0);
         assert_eq!(child.height, 0.0);
@@ -570,9 +586,7 @@ mod tests {
     #[test]
     fn text_in_default_vstack_fills_parent_content_width() {
         let child = Text("Name").into_view();
-        let view = VStack()
-            .padding(24.0)
-            .with_children(vec![child.clone()]);
+        let view = VStack().padding(24.0).with_children(vec![child.clone()]);
         let root = crate::tree::canonicalize_view(
             1,
             &view,
@@ -580,8 +594,14 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
-        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+        let parent = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("parent frame");
+        let text = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("text frame");
 
         assert_eq!(text.x, 24.0);
         assert_eq!(text.width, parent.width - 48.0);
@@ -602,7 +622,10 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+        let text = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("text frame");
 
         assert_eq!(text.x, 24.0);
         assert!(text.width > 0.0);
@@ -612,9 +635,7 @@ mod tests {
     #[test]
     fn text_in_hstack_keeps_intrinsic_width() {
         let child = Text("Name").into_view();
-        let view = HStack()
-            .padding(24.0)
-            .with_children(vec![child.clone()]);
+        let view = HStack().padding(24.0).with_children(vec![child.clone()]);
         let root = crate::tree::canonicalize_view(
             1,
             &view,
@@ -622,8 +643,14 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let parent = frames.iter().find(|frame| frame.id == 1).expect("parent frame");
-        let text = frames.iter().find(|frame| frame.id == 2).expect("text frame");
+        let parent = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("parent frame");
+        let text = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("text frame");
 
         assert!(text.y > 24.0);
         assert!(text.y < parent.height - 24.0);
@@ -645,8 +672,14 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let safe_area = frames.iter().find(|frame| frame.id == 1).expect("safe area frame");
-        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+        let safe_area = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("safe area frame");
+        let child = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("child frame");
 
         assert_eq!(safe_area.height, 844.0);
         assert_eq!(child.x, (390.0 - child.width) / 2.0);
@@ -666,7 +699,10 @@ mod tests {
         );
 
         let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
-        let child = frames.iter().find(|frame| frame.id == 2).expect("child frame");
+        let child = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("child frame");
 
         assert_eq!(child.y, 0.0);
         assert_eq!(child.height, 844.0);

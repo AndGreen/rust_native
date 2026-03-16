@@ -175,8 +175,8 @@ fn emit_replace_payload(node: &CanonicalNode, mutations: &mut Vec<Mutation>) {
 fn props_removed(previous: &CanonicalNode, next: &CanonicalNode) -> bool {
     previous
         .props
-        .iter()
-        .any(|(key, _)| prop_value(next, *key).is_none())
+        .keys()
+        .any(|key| prop_value(next, *key).is_none())
 }
 
 fn listener_signature(node: &CanonicalNode) -> (bool, bool, bool) {

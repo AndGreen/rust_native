@@ -34,7 +34,7 @@ where
                             .font(Font::bold(24.0))
                             .color(Color::primary())
                         HStack(spacing = 8.0) {
-                            Button("−") 
+                            Button("−")
                                 .background(Color::hex_or_black("#D14A42"))
                                 .foreground(Color::hex_or_black("#F6F0EB"))
                                 .corner_radius(12.0)
@@ -56,10 +56,19 @@ where
                 }
             }
         }
-         
     })
 }
 
 pub fn create_counter_native_app(host_size: HostSize) -> App<NativeBackend> {
-    create_counter_app(NativeBackend::default(), host_size)
+    create_counter_app(native_backend(), host_size)
+}
+
+#[cfg(any(target_os = "ios", target_os = "android"))]
+fn native_backend() -> NativeBackend {
+    NativeBackend::default()
+}
+
+#[cfg(all(not(target_os = "ios"), not(target_os = "android")))]
+fn native_backend() -> NativeBackend {
+    NativeBackend
 }

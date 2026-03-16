@@ -93,5 +93,15 @@ where
 }
 
 pub fn create_form_demo_native_app(host_size: HostSize) -> App<NativeBackend> {
-    create_form_demo_app(NativeBackend::default(), host_size)
+    create_form_demo_app(native_backend(), host_size)
+}
+
+#[cfg(any(target_os = "ios", target_os = "android"))]
+fn native_backend() -> NativeBackend {
+    NativeBackend::default()
+}
+
+#[cfg(all(not(target_os = "ios"), not(target_os = "android")))]
+fn native_backend() -> NativeBackend {
+    NativeBackend
 }

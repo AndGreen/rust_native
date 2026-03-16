@@ -85,13 +85,16 @@ impl Config {
                     let raw = args
                         .next()
                         .ok_or_else(|| "missing value after --port".to_string())?;
-                    port = raw.parse().map_err(|_| "invalid --port value".to_string())?;
+                    port = raw
+                        .parse()
+                        .map_err(|_| "invalid --port value".to_string())?;
                 }
                 other => return Err(format!("unknown argument: {other}")),
             }
         }
 
-        let app_id = app_id.ok_or_else(|| "usage: cargo run -p dev_cli -- --app counter".to_string())?;
+        let app_id =
+            app_id.ok_or_else(|| "usage: cargo run -p dev_cli -- --app counter".to_string())?;
         let workspace_root = env::current_dir().map_err(|error| error.to_string())?;
         Ok(Self {
             app_id,
@@ -103,7 +106,11 @@ impl Config {
     }
 }
 
-fn reload_worker(config: &Config, shared: &Arc<Mutex<SharedState>>, worker: &mut Child) -> Result<(), String> {
+fn reload_worker(
+    config: &Config,
+    shared: &Arc<Mutex<SharedState>>,
+    worker: &mut Child,
+) -> Result<(), String> {
     broadcast(shared, &ServerMessage::Reloading);
 
     let output = Command::new("cargo")
@@ -141,7 +148,10 @@ fn build_and_spawn(config: &Config, shared: &Arc<Mutex<SharedState>>) -> Result<
     spawn_worker_process(config, shared)
 }
 
-fn spawn_worker_process(config: &Config, shared: &Arc<Mutex<SharedState>>) -> Result<Child, String> {
+fn spawn_worker_process(
+    config: &Config,
+    shared: &Arc<Mutex<SharedState>>,
+) -> Result<Child, String> {
     broadcast(shared, &ServerMessage::Reloading);
     broadcast(shared, &ServerMessage::ResetUi);
 
@@ -149,7 +159,11 @@ fn spawn_worker_process(config: &Config, shared: &Arc<Mutex<SharedState>>) -> Re
         let state = shared.lock().unwrap();
         serde_json::to_string(&state.host).map_err(|error| error.to_string())?
     };
-    let binary = config.workspace_root.join("target").join("debug").join(&config.app_id);
+    let binary = config
+        .workspace_root
+        .join("target")
+        .join("debug")
+        .join(&config.app_id);
     let mut child = Command::new(binary)
         .current_dir(&config.workspace_root)
         .env("MF_DEV_REMOTE_WORKER", "1")

@@ -75,7 +75,7 @@ pub extern "C" fn mf_app_resize(
 
 #[no_mangle]
 pub extern "C" fn mf_dev_renderer_apply_message(json: *const c_char) -> bool {
-    dev_renderer_apply_message(json)
+    unsafe { dev_renderer_apply_message(json) }
 }
 
 #[no_mangle]

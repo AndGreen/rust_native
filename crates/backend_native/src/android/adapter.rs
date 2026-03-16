@@ -9,10 +9,10 @@ use native_schema::{
 };
 
 use crate::executor::PlatformAdapter;
-
-use super::events::{
+use crate::shared::bindings::{
     emit_appear_if_needed, queue_event, take_events, unregister_binding, update_binding,
 };
+use crate::shared::props;
 
 pub(super) trait AndroidBridge {
     fn is_ui_thread(&self) -> bool;
@@ -165,48 +165,40 @@ where
         key: PropKey,
     ) -> Result<(), BackendError> {
         match key {
-            PropKey::Color => match props.get(&PropKey::Color) {
-                Some(PropValue::Color(color)) => self.bridge.set_color(kind, handle, *color),
+            PropKey::Color => match props::color(props, PropKey::Color) {
+                Some(Ok(color)) => self.bridge.set_color(kind, handle, color),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid Color prop");
                     Ok(())
                 }
             },
-            PropKey::BackgroundColor => match props.get(&PropKey::BackgroundColor) {
-                Some(PropValue::Color(color)) => self.bridge.set_background_color(handle, *color),
+            PropKey::BackgroundColor => match props::color(props, PropKey::BackgroundColor) {
+                Some(Ok(color)) => self.bridge.set_background_color(handle, color),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid BackgroundColor prop");
                     Ok(())
                 }
             },
-            PropKey::FontSize | PropKey::FontWeight => {
-                let size = match props.get(&PropKey::FontSize) {
-                    Some(PropValue::Float(size)) => *size,
-                    Some(_) => {
-                        eprintln!("[backend_native/android] invalid FontSize prop");
-                        return Ok(());
-                    }
-                    None => 14.0,
-                };
-                let weight = match props.get(&PropKey::FontWeight) {
-                    Some(PropValue::FontWeight(weight)) => *weight,
-                    Some(_) => {
-                        eprintln!("[backend_native/android] invalid FontWeight prop");
-                        return Ok(());
-                    }
-                    None => FontWeight::Regular,
-                };
-                self.bridge.set_font(kind, handle, size, weight)
-            }
-            PropKey::CornerRadius => match props.get(&PropKey::CornerRadius) {
-                Some(PropValue::Float(radius)) => self.bridge.set_corner_radius(handle, *radius),
+            PropKey::FontSize | PropKey::FontWeight => match props::font(props, 14.0) {
+                Ok((size, weight)) => self.bridge.set_font(kind, handle, size, weight),
+                Err("invalid FontSize prop") => {
+                    eprintln!("[backend_native/android] invalid FontSize prop");
+                    Ok(())
+                }
+                Err(_) => {
+                    eprintln!("[backend_native/android] invalid FontWeight prop");
+                    Ok(())
+                }
+            },
+            PropKey::CornerRadius => match props::float(props, PropKey::CornerRadius) {
+                Some(Ok(radius)) => self.bridge.set_corner_radius(handle, radius),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid CornerRadius prop");
                     Ok(())
                 }
             },
-            PropKey::Enabled => match props.get(&PropKey::Enabled) {
-                Some(PropValue::Bool(enabled)) => self.bridge.set_enabled(handle, *enabled),
+            PropKey::Enabled => match props::bool_value(props, PropKey::Enabled) {
+                Some(Ok(enabled)) => self.bridge.set_enabled(handle, enabled),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid Enabled prop");
                     Ok(())
@@ -218,16 +210,16 @@ where
                         "Focused is unsupported for {kind:?}"
                     )));
                 }
-                match props.get(&PropKey::Focused) {
-                    Some(PropValue::Bool(focused)) => self.bridge.set_focused(handle, *focused),
+                match props::bool_value(props, PropKey::Focused) {
+                    Some(Ok(focused)) => self.bridge.set_focused(handle, focused),
                     _ => {
                         eprintln!("[backend_native/android] ignoring invalid Focused prop");
                         Ok(())
                     }
                 }
             }
-            PropKey::Source => match props.get(&PropKey::Source) {
-                Some(PropValue::String(source)) => self.bridge.set_source(handle, source),
+            PropKey::Source => match props::string(props, PropKey::Source) {
+                Some(Ok(source)) => self.bridge.set_source(handle, source),
                 _ => {
                     eprintln!("[backend_native/android] ignoring invalid Source prop");
                     Ok(())
