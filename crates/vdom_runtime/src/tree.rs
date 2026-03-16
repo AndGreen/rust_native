@@ -348,6 +348,19 @@ fn container_props(container: &Container) -> PropMap {
         PropKey::Padding,
         PropValue::Insets(container.padding_value()),
     );
+    props.insert(
+        PropKey::Alignment,
+        PropValue::Alignment(match container.alignment_value() {
+            WidgetAlignment::Leading => Alignment::Leading,
+            WidgetAlignment::Center => Alignment::Center,
+            WidgetAlignment::Trailing => Alignment::Trailing,
+            WidgetAlignment::Stretch => Alignment::Stretch,
+        }),
+    );
+    props.insert(
+        PropKey::JustifyContent,
+        PropValue::JustifyContent(container.justify_content_value()),
+    );
     if let Some(width) = container.width_value() {
         props.insert(
             PropKey::Width,
@@ -609,6 +622,8 @@ mod tests {
     fn container_props_include_visual_and_layout_values() {
         let view = Container::new()
             .padding_insets(EdgeInsets::new(1.0, 2.0, 3.0, 4.0))
+            .alignment(mf_widgets::Alignment::Center)
+            .justify_content(JustifyContent::Center)
             .width(120.0)
             .height(44.0)
             .background(Color::new(0.2, 0.3, 0.4).with_alpha(0.7))
@@ -632,6 +647,14 @@ mod tests {
         assert_eq!(
             props.get(&PropKey::Padding),
             Some(&PropValue::Insets(EdgeInsets::new(1.0, 2.0, 3.0, 4.0)))
+        );
+        assert_eq!(
+            props.get(&PropKey::Alignment),
+            Some(&PropValue::Alignment(Alignment::Center))
+        );
+        assert_eq!(
+            props.get(&PropKey::JustifyContent),
+            Some(&PropValue::JustifyContent(JustifyContent::Center))
         );
         assert_eq!(
             props.get(&PropKey::CornerRadii),

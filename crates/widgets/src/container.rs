@@ -1,12 +1,15 @@
 use mf_core::dsl::WithChildren;
 use mf_core::view::{View, WidgetElement};
-use native_schema::{CornerRadii, EdgeInsets, LineStyle, PointValue, ShadowStyle};
+use native_schema::{CornerRadii, EdgeInsets, JustifyContent, LineStyle, PointValue, ShadowStyle};
 
 use crate::color::Color;
+use crate::layout::Alignment;
 
 #[derive(Clone)]
 pub struct Container {
     padding: EdgeInsets,
+    alignment: Alignment,
+    justify_content: JustifyContent,
     width: Option<f32>,
     height: Option<f32>,
     min_width: Option<f32>,
@@ -34,6 +37,8 @@ impl Container {
     pub fn new() -> Self {
         Self {
             padding: EdgeInsets::all(0.0),
+            alignment: Alignment::Leading,
+            justify_content: JustifyContent::Start,
             width: None,
             height: None,
             min_width: None,
@@ -89,6 +94,16 @@ impl Container {
 
     pub fn padding_insets(mut self, padding: EdgeInsets) -> Self {
         self.padding = padding;
+        self
+    }
+
+    pub fn alignment(mut self, alignment: Alignment) -> Self {
+        self.alignment = alignment;
+        self
+    }
+
+    pub fn justify_content(mut self, justify_content: JustifyContent) -> Self {
+        self.justify_content = justify_content;
         self
     }
 
@@ -154,6 +169,14 @@ impl Container {
 
     pub fn padding_value(&self) -> EdgeInsets {
         self.padding
+    }
+
+    pub fn alignment_value(&self) -> Alignment {
+        self.alignment
+    }
+
+    pub fn justify_content_value(&self) -> JustifyContent {
+        self.justify_content
     }
 
     pub fn width_value(&self) -> Option<f32> {
@@ -224,8 +247,10 @@ impl WidgetElement for Container {
 
     fn describe(&self) -> String {
         format!(
-            "Container(padding: {:?}, width: {:?}, height: {:?}, background: {:?}, opacity: {:?}, full_round: {})",
+            "Container(padding: {:?}, alignment: {:?}, justify_content: {:?}, width: {:?}, height: {:?}, background: {:?}, opacity: {:?}, full_round: {})",
             self.padding,
+            self.alignment,
+            self.justify_content,
             self.width,
             self.height,
             self.background,
@@ -250,6 +275,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn container_defaults_to_leading_start_alignment() {
+        let container = Container::new();
+
+        assert_eq!(container.alignment_value(), Alignment::Leading);
+        assert_eq!(container.justify_content_value(), JustifyContent::Start);
+    }
+
+    #[test]
     fn container_builder_sets_visual_and_layout_props() {
         let container = Container::new()
             .width(120.0)
@@ -257,6 +290,8 @@ mod tests {
             .min_width(80.0)
             .max_height(60.0)
             .padding_insets(EdgeInsets::new(4.0, 8.0, 12.0, 16.0))
+            .alignment(Alignment::Center)
+            .justify_content(JustifyContent::Stretch)
             .background(Color::new(0.1, 0.2, 0.3).with_alpha(0.9))
             .opacity(0.75)
             .border(2.0, Color::new(0.9, 0.8, 0.7))
@@ -275,6 +310,8 @@ mod tests {
             container.padding_value(),
             EdgeInsets::new(4.0, 8.0, 12.0, 16.0)
         );
+        assert_eq!(container.alignment_value(), Alignment::Center);
+        assert_eq!(container.justify_content_value(), JustifyContent::Stretch);
         assert_eq!(container.opacity_value(), Some(0.75));
         assert_eq!(container.corner_radius_value(), Some(14.0));
         assert_eq!(

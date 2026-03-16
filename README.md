@@ -35,10 +35,51 @@ mf/
    ```bash
    cargo build -p counter --target aarch64-apple-ios-sim
    cargo build -p album_list --target aarch64-apple-ios-sim
+   cargo build -p form_demo --target aarch64-apple-ios-sim
    ```
 5. Open the per-example iOS project when needed:
    - `examples/counter/ios/App/App.xcodeproj`
    - `examples/album_list/ios/App/App.xcodeproj`
+   - `examples/form_demo/ios/App/App.xcodeproj`
+
+## Remote Dev Server
+
+The examples can run through the TCP dev server instead of embedding the Rust app directly into the host process. The current supported host flow in this repository is the local iOS Simulator setup used by the example Xcode projects.
+
+1. Start the dev server for the app you want to run:
+   ```bash
+   cargo run -p dev_cli -- --app form_demo --host 127.0.0.1 --port 4488
+   ```
+   Replace `form_demo` with `counter` or `album_list` as needed.
+2. Keep the server running in a terminal. It will:
+   - build the selected Rust example;
+   - spawn the remote worker process;
+   - watch the workspace for file changes;
+   - rebuild and reconnect the UI on change.
+3. Open the matching Xcode project and run the `App` scheme in the iOS Simulator.
+
+### Environment Variables For The Simulator
+
+When the native host starts in remote-dev mode, it reads these environment variables:
+
+- `MF_DEV_SERVER_HOST`: host name or IP address for `dev_cli`.
+- `MF_DEV_SERVER_PORT`: TCP port for `dev_cli`. Defaults to `4488` if omitted by the host.
+
+For the local iOS Simulator flow on the same Mac, use:
+
+```text
+MF_DEV_SERVER_HOST=127.0.0.1
+MF_DEV_SERVER_PORT=4488
+```
+
+These values are already configured in the shared Xcode schemes shipped with the examples. If you wire up a custom native host or emulator, make sure its launch environment uses the same host and port as the `dev_cli` command line.
+
+Do not pass these worker-only variables into the simulator manually:
+
+- `MF_DEV_REMOTE_WORKER`
+- `MF_DEV_HOST_METRICS`
+
+`dev_cli` injects them into the spawned Rust worker process automatically. The simulator/native host only needs `MF_DEV_SERVER_HOST` and `MF_DEV_SERVER_PORT`.
 
 ## Solid-like Reactive Helpers
 

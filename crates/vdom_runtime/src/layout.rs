@@ -464,7 +464,10 @@ fn count_nodes(node: &CanonicalNode) -> usize {
 #[cfg(test)]
 mod tests {
     use mf_core::{IntoView, WithChildren};
-    use mf_widgets::{Alignment, HStack, Image, Input, JustifyContent, SafeArea, Text, VStack};
+    use mf_widgets::{
+        Alignment, Container, EdgeInsets, HStack, Image, Input, JustifyContent, SafeArea, Text,
+        VStack,
+    };
     use native_schema::{ElementKind, LayoutFrame};
 
     use super::{compute_layout_frames, validate_layout_frames};
@@ -709,5 +712,38 @@ mod tests {
 
         assert_eq!(child.y, 0.0);
         assert_eq!(child.height, 844.0);
+    }
+
+    #[test]
+    fn container_can_center_child_within_padded_content_box() {
+        let child = Text("Preview").into_view();
+        let view = Container::new()
+            .width(120.0)
+            .height(80.0)
+            .padding_insets(EdgeInsets::new(8.0, 12.0, 8.0, 12.0))
+            .alignment(Alignment::Center)
+            .justify_content(JustifyContent::Center)
+            .with_children(vec![child.clone()]);
+        let root = crate::tree::canonicalize_view(
+            1,
+            &view,
+            vec![crate::tree::canonicalize_view(2, &child, Vec::new())],
+        );
+
+        let frames = compute_layout_frames(&root, HostSize::new(390.0, 844.0));
+        let container = frames
+            .iter()
+            .find(|frame| frame.id == 1)
+            .expect("container frame");
+        let child = frames
+            .iter()
+            .find(|frame| frame.id == 2)
+            .expect("child frame");
+
+        let content_width = container.width - 24.0;
+        let content_height = container.height - 16.0;
+
+        assert_eq!(child.x, 12.0 + (content_width - child.width) / 2.0);
+        assert_eq!(child.y, 8.0 + (content_height - child.height) / 2.0);
     }
 }

@@ -104,14 +104,21 @@ where
                                     full_round = true,
                                 )
                                 Container(
+                                    min_width = 96.0,
                                     padding_insets = EdgeInsets::new(8.0, 12.0, 8.0, 12.0),
                                     background = Color::hex_or_black("#EADFCF"),
                                 )
+                                    .alignment(Alignment::Center)
+                                    .justify_content(JustifyContent::Center)
                                     .corner_radius_per_corner(14.0, 4.0, 14.0, 4.0)
                                     .offset(0.0, -1.0) {
-                                    Text("Preview")
-                                        .font(Font::semibold(14.0))
-                                        .foreground(Color::primary())
+                                    Container(
+                                        background = Color::hex_or_black("#ff7d18"),
+                                    ) {
+                                        Text("Preview")
+                                            .font(Font::semibold(14.0))
+                                            .foreground(Color::primary())
+                                    }
                                 }
                                 Container(
                                     width = 44.0,
